@@ -36,7 +36,6 @@ pip install -e ".[dev]"
 pip install -e ".[all]"
 
 # Install with specific extras
-pip install -e ".[docs]"      # Documentation tools
 pip install -e ".[optional]"  # Optional scientific packages
 ```
 
@@ -96,7 +95,7 @@ FiberPlotter.plot_fiber_contour(fiber, component='SXX', gauge_length=5.0, save_p
 
 ## Documentation
 
-Full documentation is available at [https://ddm3d.readthedocs.io](https://ddm3d.readthedocs.io)
+Documentation is available in the README.md file and through the comprehensive docstrings in the code.
 
 ## Examples
 
@@ -178,11 +177,6 @@ flake8 ddm3d examples tests
 
 # Type checking
 mypy ddm3d
-
-# Build documentation
-pip install -e ".[docs]"
-cd docs
-make html
 ```
 
 ### Development Features
