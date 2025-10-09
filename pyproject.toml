@@ -1,10 +1,104 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "ddm3d"
+version = "0.2.0"
+description = "3D Displacement Discontinuity Method for DAS Simulation with Dynamic Interpolation"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "DDM3D Contributors", email = "your.email@example.com"}
+]
+maintainers = [
+    {name = "DDM3D Contributors", email = "your.email@example.com"}
+]
+keywords = [
+    "geomechanics",
+    "fracture",
+    "DAS",
+    "distributed acoustic sensing",
+    "displacement discontinuity method",
+    "DDM",
+    "seismic",
+    "geophysics"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Geology",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.20.0,<2.0.0",
+    "matplotlib>=3.3.0,<4.0.0",
+    "h5py>=3.0.0,<4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0.0,<8.0.0",
+    "pytest-cov>=2.0.0,<5.0.0",
+    "black>=21.0.0,<24.0.0",
+    "flake8>=3.8.0,<7.0.0",
+    "mypy>=0.800,<2.0.0",
+]
+docs = [
+    "sphinx>=4.0.0,<8.0.0",
+    "sphinx-rtd-theme>=0.5.0,<3.0.0",
+    "nbsphinx>=0.8.0,<1.0.0",
+]
+optional = [
+    "scipy>=1.7.0,<2.0.0",
+    "pandas>=1.3.0,<3.0.0",
+    "seaborn>=0.11.0,<1.0.0",
+]
+all = [
+    "pytest>=6.0.0,<8.0.0",
+    "pytest-cov>=2.0.0,<5.0.0",
+    "black>=21.0.0,<24.0.0",
+    "flake8>=3.8.0,<7.0.0",
+    "mypy>=0.800,<2.0.0",
+    "sphinx>=4.0.0,<8.0.0",
+    "sphinx-rtd-theme>=0.5.0,<3.0.0",
+    "nbsphinx>=0.8.0,<1.0.0",
+    "scipy>=1.7.0,<2.0.0",
+    "pandas>=1.3.0,<3.0.0",
+    "seaborn>=0.11.0,<1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/wcy41gtc/DDM3"
+Documentation = "https://ddm3d.readthedocs.io"
+Repository = "https://github.com/wcy41gtc/DDM3.git"
+Issues = "https://github.com/wcy41gtc/DDM3/issues"
+Changelog = "https://github.com/wcy41gtc/DDM3/blob/main/CHANGELOG.md"
+
+[project.scripts]
+ddm3d = "ddm3d.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ddm3d*"]
+exclude = ["tests*", "examples*", "docs*"]
+
+[tool.setuptools.package-data]
+ddm3d = ["*.md", "*.txt", "*.yml", "*.yaml"]
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -22,14 +116,18 @@ extend-exclude = '''
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-python_files = ["test_*.py"]
+python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
     "--verbose",
-    "--tb=short",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
 ]
 
 [tool.mypy]
@@ -51,5 +149,29 @@ strict_equality = true
 module = [
     "matplotlib.*",
     "h5py.*",
+    "numpy.*",
 ]
 ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["ddm3d"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/examples/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

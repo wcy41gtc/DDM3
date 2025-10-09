@@ -4,31 +4,40 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-DDM3D is a modern, object-oriented Python library for simulating Distributed Acoustic Sensing (DAS) responses using the 3D Displacement Discontinuity Method (DDM). It provides tools for modeling fractures, faults, and other discontinuities in geological formations and calculating their effects on DAS fiber optic sensors.
+DDM3D is a modern, object-oriented Python library for simulating Distributed Acoustic Sensing (DAS) responses using the 3D Displacement Discontinuity Method (DDM). It provides comprehensive tools for modeling fractures, faults, and other discontinuities in geological formations and calculating their effects on DAS fiber optic sensors.
 
 ## Features
 
 - **Object-Oriented Design**: Clean, modular architecture with well-defined classes
 - **3D Fracture Modeling**: Support for rectangular and elliptical fractures with arbitrary orientations
 - **DAS Fiber Simulation**: Calculate stress and displacement fields along fiber optic cables
+- **Dynamic Interpolation**: Plot fiber data at any desired channel spacing through interpolation
 - **Advanced Visualization**: Comprehensive plotting tools including time-space contour plots
 - **Fracture Evolution Workflow**: Complete time-series simulation with multiple stress modes
 - **Professional Plotting**: Time-space contour plots matching original DDM3D format
-- **High Performance**: Optimized numerical calculations using NumPy
+- **High Performance**: Optimized numerical calculations using NumPy (no scipy dependency)
 - **Extensible**: Easy to add new fracture geometries and calculation methods
+- **Memory Efficient**: Proper matplotlib memory management for large simulations
 
 ## Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ddm3d.git
-cd ddm3d
+git clone https://github.com/wcy41gtc/DDM3.git
+cd DDM3
 
-# Install in development mode
+# Install core package
 pip install -e .
 
-# Or install with dependencies
+# Install with development dependencies
 pip install -e ".[dev]"
+
+# Install with all optional dependencies
+pip install -e ".[all]"
+
+# Install with specific extras
+pip install -e ".[docs]"      # Documentation tools
+pip install -e ".[optional]"  # Optional scientific packages
 ```
 
 ## Quick Start
@@ -72,10 +81,17 @@ calculator.calculate_fiber_response([fracture], [fiber])
 fracture.plot_aperture()
 fiber.plot_strain_response()
 
-# Create professional time-space contour plots
+# Create professional time-space contour plots with dynamic interpolation
 from ddm3d import FiberPlotter
+
+# Plot with original channel spacing
 FiberPlotter.plot_fiber_contour(fiber, component='EXX', save_path='strain_contour.png')
-FiberPlotter.plot_fiber_contour(fiber, component='SXX', save_path='stress_contour.png')
+
+# Plot with interpolated 10m channel spacing
+FiberPlotter.plot_fiber_contour(fiber, component='EXX', gauge_length=10.0, save_path='strain_10m.png')
+
+# Plot stress with 5m channel spacing
+FiberPlotter.plot_fiber_contour(fiber, component='SXX', gauge_length=5.0, save_path='stress_5m.png')
 ```
 
 ## Documentation
@@ -108,9 +124,31 @@ Available modes:
 - **mixed_mode**: Fracture with combined shear and normal stress loading
 
 The workflow generates:
-- Time-series HDF5 data files
-- Professional time-space contour plots (EXX, SXX components)
-- Complete fracture evolution analysis
+- Time-series HDF5 data files for each fiber
+- Professional time-space contour plots with dynamic interpolation
+- Strain and strain rate plots (EYY_U, EZZ_U, EYY_U_Rate, EZZ_U_Rate)
+- Complete fracture evolution analysis with 4 different stress modes
+
+### Dynamic Interpolation
+
+The new dynamic interpolation feature allows you to plot fiber data at any desired channel spacing:
+
+```python
+# Original fiber: 200m length, 200 channels (1m spacing)
+fiber = Fiber.create_linear(
+    start=(50, 10, -100),
+    end=(50, 10, 100),
+    n_channels=200
+)
+
+# Plot with different channel spacings
+FiberPlotter.plot_fiber_contour(fiber, component='EYY_U', gauge_length=None)    # Original 1m spacing
+FiberPlotter.plot_fiber_contour(fiber, component='EYY_U', gauge_length=5.0)     # 5m spacing
+FiberPlotter.plot_fiber_contour(fiber, component='EYY_U', gauge_length=10.0)    # 10m spacing
+FiberPlotter.plot_fiber_contour(fiber, component='EYY_U', gauge_length=20.0)    # 20m spacing
+```
+
+This enables both high-resolution analysis and overview visualization without recalculating DDM results.
 
 ## Contributing
 
@@ -131,14 +169,29 @@ pip install -e ".[dev]"
 # Run tests
 pytest
 
+# Run tests with coverage
+pytest --cov=ddm3d
+
 # Run linting
-black ddm3d tests
-flake8 ddm3d tests
+black ddm3d examples tests
+flake8 ddm3d examples tests
+
+# Type checking
+mypy ddm3d
 
 # Build documentation
+pip install -e ".[docs]"
 cd docs
 make html
 ```
+
+### Development Features
+
+- **Dynamic Interpolation**: Plot fiber data at any channel spacing
+- **Memory Management**: Proper matplotlib figure cleanup for large simulations
+- **Comprehensive Testing**: Full workflow testing with multiple fracture modes
+- **Type Hints**: Complete type annotations for better IDE support
+- **Documentation**: Extensive docstrings and examples
 
 ## Citation
 
@@ -146,10 +199,11 @@ If you use DDM3D in your research, please cite:
 
 ```bibtex
 @software{ddm3d2024,
-  title={DDM3D: 3D Displacement Discontinuity Method for DAS Simulation},
-  author={Your Name and Contributors},
+  title={DDM3D: 3D Displacement Discontinuity Method for DAS Simulation with Dynamic Interpolation},
+  author={DDM3D Contributors},
   year={2024},
-  url={https://github.com/yourusername/ddm3d},
+  version={0.2.0},
+  url={https://github.com/wcy41gtc/DDM3},
   license={MIT}
 }
 ```
