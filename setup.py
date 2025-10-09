@@ -41,6 +41,7 @@ setup(
     install_requires=[
         "numpy>=1.20.0",
         "matplotlib>=3.3.0",
+        "h5py>=3.0.0",
     ],
     extras_require={
         "dev": [

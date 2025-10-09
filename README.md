@@ -11,7 +11,9 @@ DDM3D is a modern, object-oriented Python library for simulating Distributed Aco
 - **Object-Oriented Design**: Clean, modular architecture with well-defined classes
 - **3D Fracture Modeling**: Support for rectangular and elliptical fractures with arbitrary orientations
 - **DAS Fiber Simulation**: Calculate stress and displacement fields along fiber optic cables
-- **Advanced Visualization**: Comprehensive plotting tools for fracture apertures and DAS responses
+- **Advanced Visualization**: Comprehensive plotting tools including time-space contour plots
+- **Fracture Evolution Workflow**: Complete time-series simulation with multiple stress modes
+- **Professional Plotting**: Time-space contour plots matching original DDM3D format
 - **High Performance**: Optimized numerical calculations using NumPy
 - **Extensible**: Easy to add new fracture geometries and calculation methods
 
@@ -69,6 +71,11 @@ calculator.calculate_fiber_response([fracture], [fiber])
 # Visualize results
 fracture.plot_aperture()
 fiber.plot_strain_response()
+
+# Create professional time-space contour plots
+from ddm3d import FiberPlotter
+FiberPlotter.plot_fiber_contour(fiber, component='EXX', save_path='strain_contour.png')
+FiberPlotter.plot_fiber_contour(fiber, component='SXX', save_path='stress_contour.png')
 ```
 
 ## Documentation
@@ -79,10 +86,31 @@ Full documentation is available at [https://ddm3d.readthedocs.io](https://ddm3d.
 
 Check out the `examples/` directory for comprehensive usage examples:
 
-- `basic_fracture_simulation.py` - Simple fracture modeling
-- `das_fiber_analysis.py` - DAS fiber response calculation
-- `multi_fracture_system.py` - Complex multi-fracture systems
-- `time_series_analysis.py` - Time-dependent fracture growth
+- `basic_example.py` - Simple fracture modeling and DAS response calculation
+- `fracture_evolution_workflow.py` - Complete fracture evolution simulation with multiple stress modes
+- `test_opening_mode_base.py` - Test script for individual fracture evolution modes
+
+### Fracture Evolution Workflow
+
+The package includes a complete workflow for simulating fracture evolution over time with different stress modes:
+
+```python
+from examples.fracture_evolution_workflow import main
+
+# Run all four fracture evolution modes
+main()
+```
+
+Available modes:
+- **opening_mode_base**: Fracture with 0° strike angle
+- **opening_mode**: Fracture with -30° strike angle  
+- **shear_mode**: Fracture with shear stress loading
+- **mixed_mode**: Fracture with combined shear and normal stress loading
+
+The workflow generates:
+- Time-series HDF5 data files
+- Professional time-space contour plots (EXX, SXX components)
+- Complete fracture evolution analysis
 
 ## Contributing
 

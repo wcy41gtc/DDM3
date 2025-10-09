@@ -40,27 +40,10 @@ class Channel:
             raise ValueError("Gauge length must be positive")
         self._gauge_length = float(gauge_length)
         
-        # Initialize data storage
-        self._stress_data: Dict[str, List[float]] = {
-            "SXX": [],
-            "SYY": [],
-            "SZZ": [],
-            "SXY": [],
-            "SXZ": [],
-            "SYZ": []
-        }
-        
-        self._strain_data: Dict[str, List[float]] = {
-            "EXX": [],
-            "EYY": [],
-            "EZZ": []
-        }
-        
-        self._displacement_data: Dict[str, List[float]] = {
-            "UXX": [],
-            "UYY": [],
-            "UZZ": []
-        }
+        # Initialize data storage - store as lists of tuples for time series
+        self._stress_data: List[Tuple[float, float, float, float, float, float]] = []
+        self._strain_data: List[Tuple[float, float, float]] = []
+        self._displacement_data: List[Tuple[float, float, float]] = []
     
     @property
     def channel_id(self) -> int:
@@ -92,6 +75,21 @@ class Channel:
         """Gauge length in meters."""
         return self._gauge_length
     
+    @property
+    def stress_data(self) -> List[Tuple[float, float, float, float, float, float]]:
+        """Stress data as list of tuples (sxx, syy, szz, sxy, sxz, syz)."""
+        return self._stress_data
+    
+    @property
+    def strain_data(self) -> List[Tuple[float, float, float]]:
+        """Strain data as list of tuples (exx, eyy, ezz)."""
+        return self._strain_data
+    
+    @property
+    def displacement_data(self) -> List[Tuple[float, float, float]]:
+        """Displacement data as list of tuples (uxx, uyy, uzz)."""
+        return self._displacement_data
+    
     def add_stress_data(
         self,
         sxx: float,
@@ -111,12 +109,10 @@ class Channel:
         sxy, sxz, syz : float
             Shear stress components in Pa
         """
-        self._stress_data["SXX"].append(float(sxx))
-        self._stress_data["SYY"].append(float(syy))
-        self._stress_data["SZZ"].append(float(szz))
-        self._stress_data["SXY"].append(float(sxy))
-        self._stress_data["SXZ"].append(float(sxz))
-        self._stress_data["SYZ"].append(float(syz))
+        self._stress_data.append((
+            float(sxx), float(syy), float(szz),
+            float(sxy), float(sxz), float(syz)
+        ))
     
     def add_strain_data(self, exx: float, eyy: float, ezz: float) -> None:
         """
@@ -127,9 +123,7 @@ class Channel:
         exx, eyy, ezz : float
             Strain components (dimensionless)
         """
-        self._strain_data["EXX"].append(float(exx))
-        self._strain_data["EYY"].append(float(eyy))
-        self._strain_data["EZZ"].append(float(ezz))
+        self._strain_data.append((float(exx), float(eyy), float(ezz)))
     
     def add_displacement_data(self, uxx: float, uyy: float, uzz: float) -> None:
         """
@@ -140,78 +134,98 @@ class Channel:
         uxx, uyy, uzz : float
             Displacement components in meters
         """
-        self._displacement_data["UXX"].append(float(uxx))
-        self._displacement_data["UYY"].append(float(uyy))
-        self._displacement_data["UZZ"].append(float(uzz))
+        self._displacement_data.append((float(uxx), float(uyy), float(uzz)))
     
-    def get_stress_data(self, component: str) -> List[float]:
+    def get_stress_data(self, component: str = None) -> List[Tuple[float, float, float, float, float, float]]:
         """
-        Get stress data for a specific component.
+        Get stress data for this channel.
         
         Parameters
         ----------
-        component : str
+        component : str, optional
             Stress component ('SXX', 'SYY', 'SZZ', 'SXY', 'SXZ', 'SYZ')
+            If None, returns all stress data as tuples
             
         Returns
         -------
-        List[float]
-            List of stress values
+        List[Tuple[float, float, float, float, float, float]] or List[float]
+            List of stress tuples (sxx, syy, szz, sxy, sxz, syz) or specific component values
         """
-        if component not in self._stress_data:
+        if component is None:
+            return self._stress_data.copy()
+        
+        component_map = {
+            'SXX': 0, 'SYY': 1, 'SZZ': 2,
+            'SXY': 3, 'SXZ': 4, 'SYZ': 5
+        }
+        
+        if component not in component_map:
             raise ValueError(f"Invalid stress component: {component}")
-        return self._stress_data[component].copy()
+        
+        idx = component_map[component]
+        return [data[idx] for data in self._stress_data]
     
-    def get_strain_data(self, component: str) -> List[float]:
+    def get_strain_data(self, component: str = None) -> List[Tuple[float, float, float]]:
         """
-        Get strain data for a specific component.
+        Get strain data for this channel.
         
         Parameters
         ----------
-        component : str
+        component : str, optional
             Strain component ('EXX', 'EYY', 'EZZ')
+            If None, returns all strain data as tuples
             
         Returns
         -------
-        List[float]
-            List of strain values
+        List[Tuple[float, float, float]] or List[float]
+            List of strain tuples (exx, eyy, ezz) or specific component values
         """
-        if component not in self._strain_data:
+        if component is None:
+            return self._strain_data.copy()
+        
+        component_map = {'EXX': 0, 'EYY': 1, 'EZZ': 2}
+        
+        if component not in component_map:
             raise ValueError(f"Invalid strain component: {component}")
-        return self._strain_data[component].copy()
+        
+        idx = component_map[component]
+        return [data[idx] for data in self._strain_data]
     
-    def get_displacement_data(self, component: str) -> List[float]:
+    def get_displacement_data(self, component: str = None) -> List[Tuple[float, float, float]]:
         """
-        Get displacement data for a specific component.
+        Get displacement data for this channel.
         
         Parameters
         ----------
-        component : str
+        component : str, optional
             Displacement component ('UXX', 'UYY', 'UZZ')
+            If None, returns all displacement data as tuples
             
         Returns
         -------
-        List[float]
-            List of displacement values
+        List[Tuple[float, float, float]] or List[float]
+            List of displacement tuples (uxx, uyy, uzz) or specific component values
         """
-        if component not in self._displacement_data:
+        if component is None:
+            return self._displacement_data.copy()
+        
+        component_map = {'UXX': 0, 'UYY': 1, 'UZZ': 2}
+        
+        if component not in component_map:
             raise ValueError(f"Invalid displacement component: {component}")
-        return self._displacement_data[component].copy()
+        
+        idx = component_map[component]
+        return [data[idx] for data in self._displacement_data]
     
     def clear_data(self) -> None:
         """Clear all stored data."""
-        for key in self._stress_data:
-            self._stress_data[key].clear()
-        for key in self._strain_data:
-            self._strain_data[key].clear()
-        for key in self._displacement_data:
-            self._displacement_data[key].clear()
+        self._stress_data.clear()
+        self._strain_data.clear()
+        self._displacement_data.clear()
     
     def get_data_count(self) -> int:
         """Get the number of data points stored."""
-        if not self._stress_data["SXX"]:
-            return 0
-        return len(self._stress_data["SXX"])
+        return len(self._stress_data)
     
     def __repr__(self) -> str:
         return (
@@ -461,6 +475,20 @@ class Fiber:
             total_length += np.linalg.norm(pos2 - pos1)
         
         return total_length
+    
+    def add_time_step(self, time_step: int) -> None:
+        """
+        Add a time step marker to all channels.
+        
+        Parameters
+        ----------
+        time_step : int
+            Time step number
+        """
+        for channel in self._channels:
+            # This method can be used to track time steps if needed
+            # For now, it's a placeholder for future time series functionality
+            pass
     
     def __repr__(self) -> str:
         return f"Fiber(id={self._fiber_id}, n_channels={self.n_channels})"

@@ -88,7 +88,7 @@ class FracturePlotter:
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
         
-        plt.show()
+        
     
     @staticmethod
     def plot_3d_aperture(
@@ -152,11 +152,64 @@ class FracturePlotter:
         cbar.set_label('Displacement (m)')
         
         plt.tight_layout()
-        plt.show()
+        
 
 
 class FiberPlotter:
     """Plotting utilities for DAS fibers."""
+    
+    @staticmethod
+    def _interpolate_fiber_data(
+        fiber: Fiber,
+        data_list: List[List[float]],
+        target_gauge_length: float
+    ) -> Tuple[np.ndarray, int]:
+        """
+        Interpolate fiber data to a new gauge length.
+        
+        Parameters
+        ----------
+        fiber : Fiber
+            Fiber object
+        data_list : List[List[float]]
+            List of time series data for each channel
+        target_gauge_length : float
+            Target gauge length for interpolation
+            
+        Returns
+        -------
+        Tuple[np.ndarray, int]
+            Interpolated data array and number of interpolated channels
+        """
+        # Get original channel positions
+        positions = fiber.get_channel_positions()
+        n_original_channels = len(positions)
+        n_time_steps = len(data_list[0])
+        
+        # Calculate distances along fiber
+        distances = [0.0]
+        for i in range(1, n_original_channels):
+            pos1 = np.array(positions[i-1])
+            pos2 = np.array(positions[i])
+            dist = np.linalg.norm(pos2 - pos1)
+            distances.append(distances[-1] + dist)
+        
+        # Create target positions
+        fiber_length = distances[-1]
+        n_interp_channels = int(fiber_length / target_gauge_length) + 1
+        target_distances = np.linspace(0, fiber_length, n_interp_channels)
+        
+        # Interpolate data for each time step
+        interpolated_data = np.zeros((n_time_steps, n_interp_channels))
+        
+        for t in range(n_time_steps):
+            # Get data for this time step
+            time_data = [data_list[i][t] for i in range(n_original_channels)]
+            
+            # Interpolate using linear interpolation
+            interpolated_data[t, :] = np.interp(target_distances, distances, time_data)
+        
+        return interpolated_data, n_interp_channels
     
     @staticmethod
     def plot_strain_response(
@@ -225,8 +278,6 @@ class FiberPlotter:
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        
-        plt.show()
     
     @staticmethod
     def plot_stress_response(
@@ -296,13 +347,14 @@ class FiberPlotter:
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
         
-        plt.show()
+        
     
     @staticmethod
     def plot_fiber_geometry(
         fiber: Fiber,
         title: Optional[str] = None,
-        figsize: Tuple[int, int] = (10, 8)
+        figsize: Tuple[int, int] = (10, 8),
+        save_path: Optional[str] = None
     ) -> None:
         """
         Plot fiber geometry in 3D.
@@ -340,4 +392,376 @@ class FiberPlotter:
         ax.legend()
         
         plt.tight_layout()
-        plt.show()
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        
+    
+    @staticmethod
+    def plot_fiber_contour(
+        fiber: Fiber,
+        component: str = 'EXX',
+        scale: float = 1.0,
+        gauge_length: float = None,
+        figsize: Tuple[int, int] = (12, 8),
+        save_path: Optional[str] = None
+    ) -> None:
+        """
+        Plot a color contour image of the quantity stored in the fiber channels.
+        This method replicates the original fibre_plot function format with dynamic interpolation.
+        
+        Parameters
+        ----------
+        fiber : Fiber
+            Fiber that stores quantities
+        component : str, optional
+            Component to plot ('SXX', 'SYY', 'SZZ', 'SXY', 'SXZ', 'SYZ', 
+                              'UXX', 'UYY', 'UZZ', 'EXX', 'EYY', 'EZZ',
+                              'EXX_U', 'EYY_U', 'EZZ_U', 'EXX_Rate', 'EYY_Rate', 'EZZ_Rate',
+                              'EXX_U_Rate', 'EYY_U_Rate', 'EZZ_U_Rate'), by default 'EXX'
+        scale : float, optional
+            Scale factor for the data, by default 1.0
+        gauge_length : float, optional
+            Desired channel spacing for interpolation in meters. If None, uses original channel spacing, by default None
+        figsize : Tuple[int, int], optional
+            Figure size, by default (12, 8)
+        save_path : str, optional
+            Path to save the plot, by default None
+        """
+        if not MATPLOTLIB_AVAILABLE:
+            raise ImportError("matplotlib is required for plotting. Install with: pip install matplotlib")
+        
+        # Get channel positions and data
+        positions = fiber.get_channel_positions()
+        n_channels = len(fiber.channels)
+        
+        if n_channels == 0:
+            raise ValueError("Fiber has no channels")
+        
+        # Get data from first channel to determine time steps
+        first_channel = fiber.channels[0]
+        
+        # Determine interpolation parameters
+        if gauge_length is None:
+            # Use original channel spacing
+            target_gauge_length = first_channel.gauge_length
+            interpolate = False
+        else:
+            # Use specified gauge length for interpolation
+            target_gauge_length = gauge_length
+            interpolate = True
+        
+        # Calculate fiber length and number of interpolated channels
+        fiber_length = fiber.get_total_length()
+        n_interp_channels = int(fiber_length / target_gauge_length) + 1
+        
+        # Determine data type and get data
+        if component.startswith('S'):
+            # Stress components
+            data_list = []
+            for channel in fiber.channels:
+                stress_data = channel.get_stress_data(component)
+                data_list.append(stress_data)
+            
+            if not data_list[0]:
+                raise ValueError(f"No {component} data available")
+            
+            n_time_steps = len(data_list[0])
+            
+            # Apply interpolation if requested
+            if interpolate:
+                _img, n_plot_channels = FiberPlotter._interpolate_fiber_data(
+                    fiber, data_list, target_gauge_length
+                )
+            else:
+                _img = np.zeros((n_time_steps, n_channels))
+                for i, channel_data in enumerate(data_list):
+                    _img[:, i] = channel_data
+                n_plot_channels = n_channels
+            
+            # Create time and channel arrays
+            t = np.linspace(0, n_time_steps, n_time_steps)
+            chn = np.linspace(0, n_plot_channels * target_gauge_length, n_plot_channels)
+            T, CHN = np.meshgrid(t, chn)
+            
+            # Scale and plot
+            vmax = np.max(np.abs(_img)) / 1e6 / scale
+            levels = MaxNLocator(nbins=200).tick_values(-vmax, vmax)
+            
+            # Create figure
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
+            
+            # Plot with appropriate sign convention
+            if component in ['SXX', 'SYY', 'SZZ']:
+                img = ax.contourf(T, CHN, -_img.T / 1e6, cmap='bwr', levels=levels, extend='both')
+            else:
+                img = ax.contourf(T, CHN, _img.T / 1e6, cmap='bwr', levels=levels, extend='both')
+            
+            # Add colorbar
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size=0.2, pad=0.05)
+            cbar = plt.colorbar(img, cax=cax)
+            cbar.ax.set_ylabel('Stress(MPa)', labelpad=15, rotation=270)
+            
+        elif component.startswith('U'):
+            # Displacement components
+            data_list = []
+            for channel in fiber.channels:
+                disp_data = channel.get_displacement_data(component)
+                data_list.append(disp_data)
+            
+            if not data_list[0]:
+                raise ValueError(f"No {component} data available")
+            
+            n_time_steps = len(data_list[0])
+            
+            # Apply interpolation if requested
+            if interpolate:
+                _img, n_plot_channels = FiberPlotter._interpolate_fiber_data(
+                    fiber, data_list, target_gauge_length
+                )
+            else:
+                _img = np.zeros((n_time_steps, n_channels))
+                for i, channel_data in enumerate(data_list):
+                    _img[:, i] = channel_data
+                n_plot_channels = n_channels
+            
+            # Create time and channel arrays
+            t = np.linspace(0, n_time_steps, n_time_steps)
+            chn = np.linspace(0, n_plot_channels * target_gauge_length, n_plot_channels)
+            T, CHN = np.meshgrid(t, chn)
+            
+            # Scale and plot
+            vmax = np.max(np.abs(_img)) * 1e3 / scale
+            levels = MaxNLocator(nbins=200).tick_values(-vmax, vmax)
+            
+            # Create figure
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
+            
+            img = ax.contourf(T, CHN, _img.T * 1e3, cmap='bwr', levels=levels, extend='both')
+            
+            # Add colorbar
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size=0.2, pad=0.05)
+            cbar = plt.colorbar(img, cax=cax)
+            cbar.ax.set_ylabel('Displacement(mm)', labelpad=15, rotation=270)
+            
+        elif component.startswith('E'):
+            # Strain components
+            if component.endswith('_U'):
+                # Strain calculated from displacement
+                base_component = component.replace('_U', '')
+                disp_component = base_component.replace('E', 'U')
+                
+                data_list = []
+                for channel in fiber.channels:
+                    disp_data = channel.get_displacement_data(disp_component)
+                    data_list.append(disp_data)
+                
+                if not data_list[0]:
+                    raise ValueError(f"No {disp_component} data available")
+                
+                n_time_steps = len(data_list[0])
+                
+                # Apply interpolation if requested
+                if interpolate:
+                    _img, n_plot_channels = FiberPlotter._interpolate_fiber_data(
+                        fiber, data_list, target_gauge_length
+                    )
+                else:
+                    _img = np.zeros((n_time_steps, n_channels))
+                    for i, channel_data in enumerate(data_list):
+                        _img[:, i] = channel_data
+                    n_plot_channels = n_channels
+                
+                # Calculate strain from displacement using target gauge length
+                for i in range(_img.shape[0]):
+                    for j in range(_img.shape[1] - 1):
+                        _img[i][j] = (_img[i][j + 1] - _img[i][j]) / target_gauge_length * 1e6
+                
+                # Create time and channel arrays
+                t = np.linspace(0, n_time_steps, n_time_steps)
+                chn = np.linspace(0, n_plot_channels * target_gauge_length, n_plot_channels)
+                T, CHN = np.meshgrid(t, chn)
+                
+                # Scale and plot
+                vmax = np.max(np.abs(_img)) / scale
+                levels = MaxNLocator(nbins=100).tick_values(-vmax, vmax)
+                
+                # Create figure
+                fig = plt.figure(figsize=figsize)
+                ax = fig.add_subplot(111)
+                
+                if base_component == 'EZZ':
+                    img = ax.contourf(T, CHN, -_img.T, cmap='bwr', levels=levels, extend='both')
+                else:
+                    img = ax.contourf(T, CHN, -_img.T, cmap='bwr', levels=levels, extend='both')
+                
+                # Add colorbar
+                divider = make_axes_locatable(ax)
+                cax = divider.append_axes("right", size=0.2, pad=0.05)
+                cbar = plt.colorbar(img, cax=cax)
+                cbar.ax.set_ylabel('$\\mu\\epsilon$', labelpad=15)
+                
+            elif component.endswith('_Rate'):
+                # Strain rate
+                base_component = component.replace('_Rate', '')
+                
+                if base_component.endswith('_U'):
+                    # Strain rate from displacement
+                    disp_component = base_component.replace('E', 'U').replace('_U', '')
+                    
+                    data_list = []
+                    for channel in fiber.channels:
+                        disp_data = channel.get_displacement_data(disp_component)
+                        data_list.append(disp_data)
+                    
+                    if not data_list[0]:
+                        raise ValueError(f"No {disp_component} data available")
+                    
+                    n_time_steps = len(data_list[0])
+                    
+                    # Apply interpolation if requested
+                    if interpolate:
+                        _img, n_plot_channels = FiberPlotter._interpolate_fiber_data(
+                            fiber, data_list, target_gauge_length
+                        )
+                    else:
+                        _img = np.zeros((n_time_steps, n_channels))
+                        for i, channel_data in enumerate(data_list):
+                            _img[:, i] = channel_data
+                        n_plot_channels = n_channels
+                    
+                    # Calculate strain from displacement using target gauge length
+                    for i in range(_img.shape[0]):
+                        for j in range(_img.shape[1] - 1):
+                            _img[i][j] = (_img[i][j + 1] - _img[i][j]) / target_gauge_length * 1e6
+                    
+                    # Calculate strain rate
+                    _img = np.diff(_img, axis=0)
+                    
+                    # Create time and channel arrays
+                    t = np.linspace(0, n_time_steps, n_time_steps - 1)
+                    chn = np.linspace(0, n_plot_channels * target_gauge_length, n_plot_channels)
+                    T, CHN = np.meshgrid(t, chn)
+                    
+                    # Scale and plot
+                    vmax = np.max(np.abs(_img)) / scale
+                    levels = MaxNLocator(nbins=200).tick_values(-vmax, vmax)
+                    
+                    # Create figure
+                    fig = plt.figure(figsize=figsize)
+                    ax = fig.add_subplot(111)
+                    
+                    if base_component == 'EZZ_U':
+                        img = ax.contourf(T, CHN, -_img.T, cmap='bwr', levels=levels, extend='both')
+                    else:
+                        img = ax.contourf(T, CHN, _img.T, cmap='bwr', levels=levels, extend='both')
+                    
+                    # Add colorbar
+                    divider = make_axes_locatable(ax)
+                    cax = divider.append_axes("right", size=0.2, pad=0.05)
+                    cbar = plt.colorbar(img, cax=cax)
+                    cbar.ax.set_ylabel('$\\mu\\epsilon$/min', labelpad=15)
+                    
+                else:
+                    # Strain rate from strain data
+                    data_list = []
+                    for channel in fiber.channels:
+                        strain_data = channel.get_strain_data(base_component)
+                        data_list.append(strain_data)
+                    
+                    if not data_list[0]:
+                        raise ValueError(f"No {base_component} data available")
+                    
+                    n_time_steps = len(data_list[0])
+                    _img = np.zeros((n_time_steps, n_channels))
+                    
+                    for i, channel_data in enumerate(data_list):
+                        _img[:, i] = channel_data
+                    
+                    # Calculate strain rate
+                    _img = np.diff(_img, axis=0) * 1e6
+                    
+                    # Create time and channel arrays
+                    t = np.linspace(0, n_time_steps, n_time_steps - 1)
+                    chn = np.linspace(0, n_channels * first_channel.gauge_length, n_channels)
+                    T, CHN = np.meshgrid(t, chn)
+                    
+                    # Scale and plot
+                    vmax = np.max(np.abs(_img)) / scale
+                    levels = MaxNLocator(nbins=200).tick_values(-vmax, vmax)
+                    
+                    # Create figure
+                    fig = plt.figure(figsize=figsize)
+                    ax = fig.add_subplot(111)
+                    
+                    img = ax.contourf(T, CHN, -_img.T, cmap='bwr', levels=levels, extend='both')
+                    
+                    # Add colorbar
+                    divider = make_axes_locatable(ax)
+                    cax = divider.append_axes("right", size=0.2, pad=0.05)
+                    cbar = plt.colorbar(img, cax=cax)
+                    cbar.ax.set_ylabel('$\\mu\\epsilon$/min', labelpad=15)
+            
+            else:
+                # Direct strain data
+                data_list = []
+                for channel in fiber.channels:
+                    strain_data = channel.get_strain_data(component)
+                    data_list.append(strain_data)
+                
+                if not data_list[0]:
+                    raise ValueError(f"No {component} data available")
+                
+                n_time_steps = len(data_list[0])
+                
+                # Apply interpolation if requested
+                if interpolate:
+                    _img, n_plot_channels = FiberPlotter._interpolate_fiber_data(
+                        fiber, data_list, target_gauge_length
+                    )
+                else:
+                    _img = np.zeros((n_time_steps, n_channels))
+                    for i, channel_data in enumerate(data_list):
+                        _img[:, i] = channel_data
+                    n_plot_channels = n_channels
+                
+                # Convert to microstrain
+                _img = _img * 1e6
+                
+                # Create time and channel arrays
+                t = np.linspace(0, n_time_steps, n_time_steps)
+                chn = np.linspace(0, n_plot_channels * target_gauge_length, n_plot_channels)
+                T, CHN = np.meshgrid(t, chn)
+                
+                # Scale and plot
+                vmax = np.max(np.abs(_img)) / scale
+                levels = MaxNLocator(nbins=200).tick_values(-vmax, vmax)
+                
+                # Create figure
+                fig = plt.figure(figsize=figsize)
+                ax = fig.add_subplot(111)
+                
+                img = ax.contourf(T, CHN, -_img.T, cmap='bwr', levels=levels, extend='both')
+                
+                # Add colorbar
+                divider = make_axes_locatable(ax)
+                cax = divider.append_axes("right", size=0.2, pad=0.05)
+                cbar = plt.colorbar(img, cax=cax)
+                cbar.ax.set_ylabel('$\\mu\\epsilon$', labelpad=15)
+        
+        else:
+            raise ValueError(f"Unsupported component: {component}")
+        
+        # Set axis properties
+        ax.invert_yaxis()
+        ax.set_xlabel('Time(min)')
+        ax.set_ylabel('Fibre Length(m)')
+        plt.tight_layout()
+        
+        if save_path:
+            plt.savefig(save_path, dpi=300)
+        
+        

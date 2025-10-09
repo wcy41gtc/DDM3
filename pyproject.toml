@@ -50,5 +50,6 @@ strict_equality = true
 [[tool.mypy.overrides]]
 module = [
     "matplotlib.*",
+    "h5py.*",
 ]
 ignore_missing_imports = true
