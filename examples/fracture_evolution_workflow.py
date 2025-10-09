@@ -104,6 +104,227 @@ def generate_geometry_and_stress_profiles(
     return {"l": l, "h": h, "dl": dl, "dh": dh, "ssl": ssl, "ssh": ssh, "snn": snn}
 
 
+def plot_geometry_and_stress_evolution(
+    profiles: Dict[str, np.ndarray],
+    save_path: str = None,
+    figsize: Tuple[int, int] = (15, 10)
+) -> None:
+    """
+    Plot the geometry and stress evolution profiles.
+    
+    Parameters
+    ----------
+    profiles : Dict[str, np.ndarray]
+        Dictionary containing geometry and stress profiles from generate_geometry_and_stress_profiles
+    save_path : str, optional
+        Path to save the plot. If None, displays the plot, by default None
+    figsize : Tuple[int, int], optional
+        Figure size (width, height), by default (15, 10)
+    """
+    # Create time array (assuming unit time steps)
+    time_steps = np.arange(len(profiles['l']))
+    
+    # Create subplots
+    fig, axes = plt.subplots(2, 3, figsize=figsize)
+    fig.suptitle('Fracture Geometry and Stress Evolution Profiles', fontsize=16, fontweight='bold')
+    
+    # Plot 1: Geometry evolution (l, h)
+    ax1 = axes[0, 0]
+    ax1.plot(time_steps, profiles['l'], 'b-', linewidth=2, label='Length (l)')
+    ax1.plot(time_steps, profiles['h'], 'r-', linewidth=2, label='Height (h)')
+    ax1.set_xlabel('Time Step')
+    ax1.set_ylabel('Dimension (m)')
+    ax1.set_title('Fracture Dimensions')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    
+    # Plot 2: Element size evolution (dl, dh)
+    ax2 = axes[0, 1]
+    ax2.plot(time_steps, profiles['dl'], 'b-', linewidth=2, label='Element Length (dl)')
+    ax2.plot(time_steps, profiles['dh'], 'r-', linewidth=2, label='Element Height (dh)')
+    ax2.set_xlabel('Time Step')
+    ax2.set_ylabel('Element Size (m)')
+    ax2.set_title('Element Dimensions')
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+    
+    # Plot 3: Normal stress evolution (snn)
+    ax3 = axes[0, 2]
+    ax3.plot(time_steps, profiles['snn'] / 1e6, 'g-', linewidth=2, label='Normal Stress (snn)')
+    ax3.set_xlabel('Time Step')
+    ax3.set_ylabel('Stress (MPa)')
+    ax3.set_title('Normal Stress Evolution')
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
+    
+    # Plot 4: Shear stress evolution (ssl)
+    ax4 = axes[1, 0]
+    ax4.plot(time_steps, profiles['ssl'] / 1e6, 'm-', linewidth=2, label='Shear Stress (ssl)')
+    ax4.set_xlabel('Time Step')
+    ax4.set_ylabel('Stress (MPa)')
+    ax4.set_title('Shear Stress Evolution (ssl)')
+    ax4.legend()
+    ax4.grid(True, alpha=0.3)
+    
+    # Plot 5: Shear stress evolution (ssh)
+    ax5 = axes[1, 1]
+    ax5.plot(time_steps, profiles['ssh'] / 1e6, 'c-', linewidth=2, label='Shear Stress (ssh)')
+    ax5.set_xlabel('Time Step')
+    ax5.set_ylabel('Stress (MPa)')
+    ax5.set_title('Shear Stress Evolution (ssh)')
+    ax5.legend()
+    ax5.grid(True, alpha=0.3)
+    
+    # Plot 6: Combined stress evolution
+    ax6 = axes[1, 2]
+    ax6.plot(time_steps, profiles['snn'] / 1e6, 'g-', linewidth=2, label='Normal (snn)')
+    ax6.plot(time_steps, profiles['ssl'] / 1e6, 'm-', linewidth=2, label='Shear (ssl)')
+    ax6.plot(time_steps, profiles['ssh'] / 1e6, 'c-', linewidth=2, label='Shear (ssh)')
+    ax6.set_xlabel('Time Step')
+    ax6.set_ylabel('Stress (MPa)')
+    ax6.set_title('All Stress Components')
+    ax6.legend()
+    ax6.grid(True, alpha=0.3)
+    
+    # Adjust layout
+    plt.tight_layout()
+    
+    # Save or show plot
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Evolution plot saved to: {save_path}")
+    else:
+        plt.show()
+    
+    plt.close()
+
+
+def plot_evolution_comparison(
+    profiles_list: List[Dict[str, np.ndarray]],
+    labels: List[str],
+    save_path: str = None,
+    figsize: Tuple[int, int] = (15, 12)
+) -> None:
+    """
+    Plot comparison of multiple geometry and stress evolution profiles.
+    
+    Parameters
+    ----------
+    profiles_list : List[Dict[str, np.ndarray]]
+        List of profile dictionaries from generate_geometry_and_stress_profiles
+    labels : List[str]
+        Labels for each profile set
+    save_path : str, optional
+        Path to save the plot. If None, displays the plot, by default None
+    figsize : Tuple[int, int], optional
+        Figure size (width, height), by default (15, 12)
+    """
+    if len(profiles_list) != len(labels):
+        raise ValueError("Number of profiles must match number of labels")
+    
+    # Create time arrays for each profile (they may have different lengths)
+    time_steps_list = [np.arange(len(profiles['l'])) for profiles in profiles_list]
+    
+    # Create subplots
+    fig, axes = plt.subplots(3, 2, figsize=figsize)
+    fig.suptitle('Fracture Evolution Comparison', fontsize=16, fontweight='bold')
+    
+    # Colors for different profiles
+    colors = ['b', 'r', 'g', 'm', 'c', 'y', 'k']
+    
+    # Plot 1: Geometry evolution (l, h)
+    ax1 = axes[0, 0]
+    for i, (profiles, label, time_steps) in enumerate(zip(profiles_list, labels, time_steps_list)):
+        color = colors[i % len(colors)]
+        ax1.plot(time_steps, profiles['l'], f'{color}-', linewidth=2, 
+                label=f'{label} - Length', alpha=0.8)
+        ax1.plot(time_steps, profiles['h'], f'{color}--', linewidth=2, 
+                label=f'{label} - Height', alpha=0.8)
+    ax1.set_xlabel('Time Step')
+    ax1.set_ylabel('Dimension (m)')
+    ax1.set_title('Fracture Dimensions')
+    ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax1.grid(True, alpha=0.3)
+    
+    # Plot 2: Element size evolution (dl, dh)
+    ax2 = axes[0, 1]
+    for i, (profiles, label, time_steps) in enumerate(zip(profiles_list, labels, time_steps_list)):
+        color = colors[i % len(colors)]
+        ax2.plot(time_steps, profiles['dl'], f'{color}-', linewidth=2, 
+                label=f'{label} - dl', alpha=0.8)
+        ax2.plot(time_steps, profiles['dh'], f'{color}--', linewidth=2, 
+                label=f'{label} - dh', alpha=0.8)
+    ax2.set_xlabel('Time Step')
+    ax2.set_ylabel('Element Size (m)')
+    ax2.set_title('Element Dimensions')
+    ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax2.grid(True, alpha=0.3)
+    
+    # Plot 3: Normal stress evolution (snn)
+    ax3 = axes[1, 0]
+    for i, (profiles, label, time_steps) in enumerate(zip(profiles_list, labels, time_steps_list)):
+        color = colors[i % len(colors)]
+        ax3.plot(time_steps, profiles['snn'] / 1e6, f'{color}-', linewidth=2, 
+                label=f'{label} - snn', alpha=0.8)
+    ax3.set_xlabel('Time Step')
+    ax3.set_ylabel('Stress (MPa)')
+    ax3.set_title('Normal Stress Evolution')
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
+    
+    # Plot 4: Shear stress evolution (ssl)
+    ax4 = axes[1, 1]
+    for i, (profiles, label, time_steps) in enumerate(zip(profiles_list, labels, time_steps_list)):
+        color = colors[i % len(colors)]
+        ax4.plot(time_steps, profiles['ssl'] / 1e6, f'{color}-', linewidth=2, 
+                label=f'{label} - ssl', alpha=0.8)
+    ax4.set_xlabel('Time Step')
+    ax4.set_ylabel('Stress (MPa)')
+    ax4.set_title('Shear Stress Evolution (ssl)')
+    ax4.legend()
+    ax4.grid(True, alpha=0.3)
+    
+    # Plot 5: Shear stress evolution (ssh)
+    ax5 = axes[2, 0]
+    for i, (profiles, label, time_steps) in enumerate(zip(profiles_list, labels, time_steps_list)):
+        color = colors[i % len(colors)]
+        ax5.plot(time_steps, profiles['ssh'] / 1e6, f'{color}-', linewidth=2, 
+                label=f'{label} - ssh', alpha=0.8)
+    ax5.set_xlabel('Time Step')
+    ax5.set_ylabel('Stress (MPa)')
+    ax5.set_title('Shear Stress Evolution (ssh)')
+    ax5.legend()
+    ax5.grid(True, alpha=0.3)
+    
+    # Plot 6: Combined stress evolution
+    ax6 = axes[2, 1]
+    for i, (profiles, label, time_steps) in enumerate(zip(profiles_list, labels, time_steps_list)):
+        color = colors[i % len(colors)]
+        ax6.plot(time_steps, profiles['snn'] / 1e6, f'{color}-', linewidth=2, 
+                label=f'{label} - snn', alpha=0.8)
+        ax6.plot(time_steps, profiles['ssl'] / 1e6, f'{color}--', linewidth=1, 
+                label=f'{label} - ssl', alpha=0.6)
+        ax6.plot(time_steps, profiles['ssh'] / 1e6, f'{color}:', linewidth=1, 
+                label=f'{label} - ssh', alpha=0.6)
+    ax6.set_xlabel('Time Step')
+    ax6.set_ylabel('Stress (MPa)')
+    ax6.set_title('All Stress Components')
+    ax6.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax6.grid(True, alpha=0.3)
+    
+    # Adjust layout
+    plt.tight_layout()
+    
+    # Save or show plot
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Evolution comparison plot saved to: {save_path}")
+    else:
+        plt.show()
+    
+    plt.close()
+
+
 def make_fracture(
     tot_l: float,
     tot_h: float,
