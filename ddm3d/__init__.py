@@ -20,7 +20,7 @@ from .visualization.plotter import FracturePlotter, FiberPlotter
 
 __all__ = [
     "Material",
-    "DisplacementDiscontinuityElement", 
+    "DisplacementDiscontinuityElement",
     "Fracture",
     "Fiber",
     "Channel",

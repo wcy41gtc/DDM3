@@ -57,8 +57,8 @@ fracture = Fracture.create_rectangular(
     length=100,  # meters
     height=50,   # meters
     element_size=(5, 5),  # meters
-    strike=0,    # degrees
-    dip=90,      # degrees
+    o1=0,        # degrees
+    o2=90,       # degrees
     material=material
 )
 
@@ -117,14 +117,14 @@ main()
 ```
 
 Available modes:
-- **opening_mode_base**: Fracture with 0° strike angle
-- **opening_mode**: Fracture with -30° strike angle  
+- **opening_mode_base**: Fracture with 0° o1 angle
+- **opening_mode**: Fracture with -30° o1 angle  
 - **shear_mode**: Fracture with shear stress loading
 - **mixed_mode**: Fracture with combined shear and normal stress loading
 
 The workflow generates:
 - Time-series HDF5 data files for each fiber
-- Professional time-space contour plots with dynamic interpolation
+- Time-space contour plots with dynamic interpolation
 - Strain and strain rate plots (EYY_U, EZZ_U, EYY_U_Rate, EZZ_U_Rate)
 - Complete fracture evolution analysis with 4 different stress modes
 
@@ -171,12 +171,6 @@ pytest
 # Run tests with coverage
 pytest --cov=ddm3d
 
-# Run linting
-black ddm3d examples tests
-flake8 ddm3d examples tests
-
-# Type checking
-mypy ddm3d
 ```
 
 ### Development Features

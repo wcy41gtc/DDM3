@@ -9,7 +9,7 @@ from .plane import Plane
 __all__ = [
     "Material",
     "DisplacementDiscontinuityElement",
-    "Fracture", 
+    "Fracture",
     "Fiber",
     "Channel",
     "Plane",
