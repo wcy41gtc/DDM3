@@ -18,7 +18,7 @@ from examples.fracture_evolution_workflow import (
 from ddm3d import Material
 
 
-def test_opening_mode_base(recalculate: bool = False):
+def test_opening_mode_base(recalculate: bool = False, gauge_length: float = 10.0):
     """Test opening mode base case with reduced time steps."""
     print("=" * 60)
     print("TESTING OPENING MODE BASE CASE")
@@ -30,7 +30,7 @@ def test_opening_mode_base(recalculate: bool = False):
     if not recalculate and check_h5_files_exist(mode):
         print(f"HDF5 files found for {mode}. Loading and plotting from saved data...")
         try:
-            plot_from_h5_files(mode)
+            plot_from_h5_files(mode, gauge_length=gauge_length)
             print("Opening mode base case test completed using saved data!")
             return
         except Exception as e:
@@ -71,7 +71,7 @@ def main():
         help="Force recalculation even if HDF5 files exist"
     )
     parser.add_argument(
-        "--gauge-length", 
+        "-gl", "--gauge-length", 
         type=float, 
         default=10.0,
         help="Gauge length for plotting (default: 10.0)"
@@ -83,7 +83,7 @@ def main():
     print(f"Gauge length: {args.gauge_length}")
     print("=" * 60)
     
-    test_opening_mode_base(args.recalculate)
+    test_opening_mode_base(args.recalculate, args.gauge_length)
 
 
 if __name__ == "__main__":

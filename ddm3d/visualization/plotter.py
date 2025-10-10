@@ -630,7 +630,7 @@ class FiberPlotter:
                     )
                 else:
                     img = ax.contourf(
-                        T, CHN, -_img.T, cmap="bwr", levels=levels, extend="both"
+                        T, CHN, _img.T, cmap="bwr", levels=levels, extend="both"
                     )
 
                 # Add colorbar

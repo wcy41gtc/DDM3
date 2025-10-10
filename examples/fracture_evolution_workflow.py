@@ -46,11 +46,11 @@ def generate_geometry_and_stress_profiles(
     asdt : int, optional
         After shut in dt, number of time steps after shut in (no real pressure,
         just assumed fracture closing and stress profile) (unitless), by default 30
-    l_scale_base : int, optional
+    l_scale_base : float, optional
         Base length scale (m), by default 60
-    l_scale : int, optional
+    l_scale : float, optional
         Length scale (m), by default 20
-    h_scale : int, optional
+    h_scale : float, optional
         Height scale (m), by default 10
     nl : int, optional
         Number of elements along l, by default 10
@@ -581,7 +581,7 @@ def make_fracture(
         Created fracture object
     """
     # Create fracture using the new OOP approach
-    fracture = Fracture.create_rectangular(
+    fracture = Fracture.create_elliptical(
         fracture_id=0,
         center=(c_x, c_y, c_z),
         length=tot_l,
@@ -867,12 +867,12 @@ def save_results(fibers: List[Fiber], mode: str, output_dir: str = "results") ->
                 fiber,
                 component="EYY_U",
                 scale=20.0,
-                gauge_length=10.0,
+                gauge_length=5.0,
                 figsize=(12, 8),
                 save_path=strain_plot_filename,
             )
 
-            # Stress response contour plot (EYY_U_Rate)
+            # Strain rate response contour plot (EYY_U_Rate)
             stress_plot_filename = os.path.join(
                 output_dir, f"{mode}_fiber_{fiber.fiber_id}_EYY_U_Rate.png"
             )
@@ -880,7 +880,7 @@ def save_results(fibers: List[Fiber], mode: str, output_dir: str = "results") ->
                 fiber,
                 component="EYY_U_Rate",
                 scale=20.0,
-                gauge_length=10.0,
+                gauge_length=5.0,
                 figsize=(12, 8),
                 save_path=stress_plot_filename,
             )
@@ -893,12 +893,12 @@ def save_results(fibers: List[Fiber], mode: str, output_dir: str = "results") ->
                 fiber,
                 component="EZZ_U",
                 scale=5.0,
-                gauge_length=10.0,
+                gauge_length=1.0,
                 figsize=(12, 8),
                 save_path=strain_plot_filename,
             )
 
-            # Stress response contour plot (EZZ_U_Rate)
+            # Strain rate response contour plot (EZZ_U_Rate)
             stress_plot_filename = os.path.join(
                 output_dir, f"{mode}_fiber_{fiber.fiber_id}_EZZ_U_Rate.png"
             )
@@ -906,7 +906,7 @@ def save_results(fibers: List[Fiber], mode: str, output_dir: str = "results") ->
                 fiber,
                 component="EZZ_U_Rate",
                 scale=5.0,
-                gauge_length=10.0,
+                gauge_length=1.0,
                 figsize=(12, 8),
                 save_path=stress_plot_filename,
             )
