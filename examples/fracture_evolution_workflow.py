@@ -10,7 +10,8 @@ Based on the original DDM3D workflow with proper stress profile generation.
 import numpy as np
 import h5py
 import os
-from typing import List, Tuple, Dict, Any
+import argparse
+from typing import List, Tuple, Dict, Any, Optional
 import matplotlib.pyplot as plt
 
 from ddm3d import (
@@ -323,6 +324,208 @@ def plot_evolution_comparison(
         plt.show()
     
     plt.close()
+
+
+def load_fiber_from_h5(h5_filepath: str, fiber_id: int) -> Fiber:
+    """
+    Load fiber data from HDF5 file and create a Fiber object.
+    
+    Parameters
+    ----------
+    h5_filepath : str
+        Path to the HDF5 file
+    fiber_id : int
+        ID for the fiber object
+        
+    Returns
+    -------
+    Fiber
+        Fiber object with loaded data
+    """
+    if not os.path.exists(h5_filepath):
+        raise FileNotFoundError(f"HDF5 file not found: {h5_filepath}")
+    
+    with h5py.File(h5_filepath, 'r') as f:
+        # Load channel positions
+        positions = f['positions'][:]
+        
+        # Create fiber with linear geometry
+        start = (positions[0, 0], positions[0, 1], positions[0, 2])
+        end = (positions[-1, 0], positions[-1, 1], positions[-1, 2])
+        n_channels = len(positions)
+        
+        fiber = Fiber.create_linear(
+            fiber_id=fiber_id,
+            start=start,
+            end=end,
+            n_channels=n_channels
+        )
+        
+        # Load time series data for each channel
+        for i, channel in enumerate(fiber.channels):
+            # Load stress data
+            if f'channel_{i}_stress' in f:
+                stress_data = f[f'channel_{i}_stress'][:]
+                for time_step_data in stress_data:
+                    channel.add_stress_data(*time_step_data)
+            
+            # Load strain data
+            if f'channel_{i}_strain' in f:
+                strain_data = f[f'channel_{i}_strain'][:]
+                for time_step_data in strain_data:
+                    channel.add_strain_data(*time_step_data)
+            
+            # Load displacement data
+            if f'channel_{i}_displacement' in f:
+                disp_data = f[f'channel_{i}_displacement'][:]
+                for time_step_data in disp_data:
+                    channel.add_displacement_data(*time_step_data)
+        
+        # Add time steps
+        n_time_steps = len(stress_data) if f'channel_0_stress' in f else 0
+        for time_step in range(n_time_steps):
+            fiber.add_time_step(time_step)
+    
+    return fiber
+
+
+def plot_from_h5_files(
+    mode: str,
+    output_dir: str = "results",
+    gauge_length: float = 10.0,
+    figsize: Tuple[int, int] = (12, 8)
+) -> None:
+    """
+    Plot fiber responses from saved HDF5 files.
+    
+    Parameters
+    ----------
+    mode : str
+        Mode name (e.g., 'opening_mode_base')
+    output_dir : str
+        Directory containing HDF5 files
+    gauge_length : float
+        Gauge length for interpolation
+    figsize : Tuple[int, int]
+        Figure size
+    """
+    print(f"Loading and plotting {mode} results from HDF5 files...")
+    
+    # Find HDF5 files for this mode
+    h5_files = []
+    for filename in os.listdir(output_dir):
+        if filename.startswith(f"{mode}_fiber_") and filename.endswith(".h5"):
+            h5_files.append(os.path.join(output_dir, filename))
+    
+    if not h5_files:
+        raise FileNotFoundError(f"No HDF5 files found for mode '{mode}' in {output_dir}")
+    
+    h5_files.sort()  # Sort to ensure consistent order
+    
+    # Load fibers from HDF5 files
+    fibers = []
+    for h5_file in h5_files:
+        # Extract fiber ID from filename
+        filename = os.path.basename(h5_file)
+        fiber_id = int(filename.split('_')[-1].split('.')[0])
+        
+        try:
+            fiber = load_fiber_from_h5(h5_file, fiber_id)
+            fibers.append(fiber)
+            print(f"  Loaded fiber {fiber_id} from {filename}")
+        except Exception as e:
+            print(f"  Warning: Failed to load {filename}: {e}")
+    
+    if not fibers:
+        raise ValueError(f"No valid fibers loaded for mode '{mode}'")
+    
+    # Create plots for each fiber
+    for fiber in fibers:
+        if fiber.fiber_id == 1:
+            # Strain response contour plot (EYY_U)
+            strain_plot_filename = os.path.join(
+                output_dir, f"{mode}_fiber_{fiber.fiber_id}_EYY_U_from_h5.png"
+            )
+            FiberPlotter.plot_fiber_contour(
+                fiber,
+                component="EYY_U",
+                scale=20.0,
+                gauge_length=gauge_length,
+                figsize=figsize,
+                save_path=strain_plot_filename,
+            )
+            print(f"  Saved EYY_U plot: {strain_plot_filename}")
+
+            # Stress response contour plot (EYY_U_Rate)
+            stress_plot_filename = os.path.join(
+                output_dir, f"{mode}_fiber_{fiber.fiber_id}_EYY_U_Rate_from_h5.png"
+            )
+            FiberPlotter.plot_fiber_contour(
+                fiber,
+                component="EYY_U_Rate",
+                scale=20.0,
+                gauge_length=gauge_length,
+                figsize=figsize,
+                save_path=stress_plot_filename,
+            )
+            print(f"  Saved EYY_U_Rate plot: {stress_plot_filename}")
+        else:
+            # Strain response contour plot (EZZ_U)
+            strain_plot_filename = os.path.join(
+                output_dir, f"{mode}_fiber_{fiber.fiber_id}_EZZ_U_from_h5.png"
+            )
+            FiberPlotter.plot_fiber_contour(
+                fiber,
+                component="EZZ_U",
+                scale=5.0,
+                gauge_length=gauge_length,
+                figsize=figsize,
+                save_path=strain_plot_filename,
+            )
+            print(f"  Saved EZZ_U plot: {strain_plot_filename}")
+
+            # Stress response contour plot (EZZ_U_Rate)
+            stress_plot_filename = os.path.join(
+                output_dir, f"{mode}_fiber_{fiber.fiber_id}_EZZ_U_Rate_from_h5.png"
+            )
+            FiberPlotter.plot_fiber_contour(
+                fiber,
+                component="EZZ_U_Rate",
+                scale=5.0,
+                gauge_length=gauge_length,
+                figsize=figsize,
+                save_path=stress_plot_filename,
+            )
+            print(f"  Saved EZZ_U_Rate plot: {stress_plot_filename}")
+    
+    print(f"Completed plotting {mode} results from HDF5 files")
+
+
+def check_h5_files_exist(mode: str, output_dir: str = "results") -> bool:
+    """
+    Check if HDF5 files exist for a given mode.
+    
+    Parameters
+    ----------
+    mode : str
+        Mode name
+    output_dir : str
+        Directory to check
+        
+    Returns
+    -------
+    bool
+        True if HDF5 files exist, False otherwise
+    """
+    if not os.path.exists(output_dir):
+        return False
+    
+    h5_files = []
+    for filename in os.listdir(output_dir):
+        if filename.startswith(f"{mode}_fiber_") and filename.endswith(".h5"):
+            h5_files.append(filename)
+    
+    return len(h5_files) > 0
 
 
 def make_fracture(
@@ -711,12 +914,25 @@ def save_results(fibers: List[Fiber], mode: str, output_dir: str = "results") ->
     print(f"Saved {mode} results to {output_dir}/")
 
 
-def run_opening_mode_base():
+def run_opening_mode_base(recalculate: bool = False):
     """Run opening mode base case (0 degrees o1)."""
     print("=" * 60)
     print("RUNNING OPENING MODE BASE CASE")
     print("=" * 60)
 
+    mode = "opening_mode_base"
+    
+    # Check if HDF5 files exist and recalculate is not forced
+    if not recalculate and check_h5_files_exist(mode):
+        print(f"HDF5 files found for {mode}. Loading and plotting from saved data...")
+        try:
+            plot_from_h5_files(mode)
+            print("Opening mode base case completed using saved data!")
+            return
+        except Exception as e:
+            print(f"Error loading from HDF5 files: {e}")
+            print("Falling back to recalculation...")
+
     # Generate stress profiles
     profiles = generate_geometry_and_stress_profiles()
 
@@ -724,26 +940,39 @@ def run_opening_mode_base():
     material = Material(shear_modulus=10e9, poisson_ratio=0.25)
 
     # Create fracture series
-    fractures_series = create_fracture_series("opening_mode_base", profiles, material)
+    fractures_series = create_fracture_series(mode, profiles, material)
 
     # Create fiber network
     fibers = create_fiber_network()
 
     # Calculate evolution
-    calculate_fracture_evolution(fractures_series, fibers, "opening_mode_base")
+    calculate_fracture_evolution(fractures_series, fibers, mode)
 
     # Save results
-    save_results(fibers, "opening_mode_base")
+    save_results(fibers, mode)
 
     print("Opening mode base case completed!")
 
 
-def run_opening_mode():
+def run_opening_mode(recalculate: bool = False):
     """Run opening mode (-30 degrees o1)."""
     print("=" * 60)
     print("RUNNING OPENING MODE")
     print("=" * 60)
 
+    mode = "opening_mode"
+    
+    # Check if HDF5 files exist and recalculate is not forced
+    if not recalculate and check_h5_files_exist(mode):
+        print(f"HDF5 files found for {mode}. Loading and plotting from saved data...")
+        try:
+            plot_from_h5_files(mode)
+            print("Opening mode completed using saved data!")
+            return
+        except Exception as e:
+            print(f"Error loading from HDF5 files: {e}")
+            print("Falling back to recalculation...")
+
     # Generate stress profiles
     profiles = generate_geometry_and_stress_profiles()
 
@@ -751,25 +980,38 @@ def run_opening_mode():
     material = Material(shear_modulus=10e9, poisson_ratio=0.25)
 
     # Create fracture series
-    fractures_series = create_fracture_series("opening_mode", profiles, material)
+    fractures_series = create_fracture_series(mode, profiles, material)
 
     # Create fiber network
     fibers = create_fiber_network()
 
     # Calculate evolution
-    calculate_fracture_evolution(fractures_series, fibers, "opening_mode")
+    calculate_fracture_evolution(fractures_series, fibers, mode)
 
     # Save results
-    save_results(fibers, "opening_mode")
+    save_results(fibers, mode)
 
     print("Opening mode completed!")
 
 
-def run_shear_mode():
+def run_shear_mode(recalculate: bool = False):
     """Run shear mode."""
     print("=" * 60)
     print("RUNNING SHEAR MODE")
     print("=" * 60)
+
+    mode = "shear_mode"
+    
+    # Check if HDF5 files exist and recalculate is not forced
+    if not recalculate and check_h5_files_exist(mode):
+        print(f"HDF5 files found for {mode}. Loading and plotting from saved data...")
+        try:
+            plot_from_h5_files(mode)
+            print("Shear mode completed using saved data!")
+            return
+        except Exception as e:
+            print(f"Error loading from HDF5 files: {e}")
+            print("Falling back to recalculation...")
 
     # Generate stress profiles
     profiles = generate_geometry_and_stress_profiles()
@@ -778,25 +1020,38 @@ def run_shear_mode():
     material = Material(shear_modulus=10e9, poisson_ratio=0.25)
 
     # Create fracture series (30 time steps for shear mode)
-    fractures_series = create_fracture_series("shear_mode", profiles, material)
+    fractures_series = create_fracture_series(mode, profiles, material)
 
     # Create fiber network
     fibers = create_fiber_network()
 
     # Calculate evolution
-    calculate_fracture_evolution(fractures_series, fibers, "shear_mode")
+    calculate_fracture_evolution(fractures_series, fibers, mode)
 
     # Save results
-    save_results(fibers, "shear_mode")
+    save_results(fibers, mode)
 
     print("Shear mode completed!")
 
 
-def run_mixed_mode():
+def run_mixed_mode(recalculate: bool = False):
     """Run mixed mode (shear + normal stress)."""
     print("=" * 60)
     print("RUNNING MIXED MODE")
     print("=" * 60)
+
+    mode = "mixed_mode"
+    
+    # Check if HDF5 files exist and recalculate is not forced
+    if not recalculate and check_h5_files_exist(mode):
+        print(f"HDF5 files found for {mode}. Loading and plotting from saved data...")
+        try:
+            plot_from_h5_files(mode)
+            print("Mixed mode completed using saved data!")
+            return
+        except Exception as e:
+            print(f"Error loading from HDF5 files: {e}")
+            print("Falling back to recalculation...")
 
     # Generate stress profiles
     profiles = generate_geometry_and_stress_profiles()
@@ -805,30 +1060,64 @@ def run_mixed_mode():
     material = Material(shear_modulus=10e9, poisson_ratio=0.25)
 
     # Create fracture series
-    fractures_series = create_fracture_series("mixed_mode", profiles, material)
+    fractures_series = create_fracture_series(mode, profiles, material)
 
     # Create fiber network
     fibers = create_fiber_network()
 
     # Calculate evolution
-    calculate_fracture_evolution(fractures_series, fibers, "mixed_mode")
+    calculate_fracture_evolution(fractures_series, fibers, mode)
 
     # Save results
-    save_results(fibers, "mixed_mode")
+    save_results(fibers, mode)
 
     print("Mixed mode completed!")
 
 
 def main():
     """Run all four fracture evolution modes."""
+    parser = argparse.ArgumentParser(description="DDM3D Fracture Evolution Workflow")
+    parser.add_argument(
+        "-r", "--recalculate", 
+        action="store_true", 
+        help="Force recalculation even if HDF5 files exist"
+    )
+    parser.add_argument(
+        "--mode", 
+        choices=["opening_mode_base", "opening_mode", "shear_mode", "mixed_mode", "all"],
+        default="all",
+        help="Run specific mode or all modes (default: all)"
+    )
+    parser.add_argument(
+        "--gauge-length", 
+        type=float, 
+        default=10.0,
+        help="Gauge length for plotting (default: 10.0)"
+    )
+    
+    args = parser.parse_args()
+    
     print("DDM3D Fracture Evolution Workflow")
     print("=" * 60)
+    print(f"Recalculate: {args.recalculate}")
+    print(f"Mode: {args.mode}")
+    print(f"Gauge length: {args.gauge_length}")
+    print("=" * 60)
 
-    # Run all modes
-    run_opening_mode_base()
-    run_opening_mode()
-    run_shear_mode()
-    run_mixed_mode()
+    if args.mode == "all":
+        # Run all modes
+        run_opening_mode_base(args.recalculate)
+        run_opening_mode(args.recalculate)
+        run_shear_mode(args.recalculate)
+        run_mixed_mode(args.recalculate)
+    elif args.mode == "opening_mode_base":
+        run_opening_mode_base(args.recalculate)
+    elif args.mode == "opening_mode":
+        run_opening_mode(args.recalculate)
+    elif args.mode == "shear_mode":
+        run_shear_mode(args.recalculate)
+    elif args.mode == "mixed_mode":
+        run_mixed_mode(args.recalculate)
 
     print("=" * 60)
     print("ALL MODES COMPLETED!")
