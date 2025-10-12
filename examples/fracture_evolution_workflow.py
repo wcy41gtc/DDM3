@@ -40,10 +40,10 @@ def generate_geometry_and_stress_profiles(
 
     Parameters
     ----------
-    bsdt : int, optional
+    bsdt : float, optional
         Before shut in dt, number of time steps before shut in (no real pressure,
         just assumed fracture opening and growth and stress profile) (unitless), by default 60
-    asdt : int, optional
+    asdt : float, optional
         After shut in dt, number of time steps after shut in (no real pressure,
         just assumed fracture closing and stress profile) (unitless), by default 30
     l_scale_base : float, optional
@@ -66,6 +66,10 @@ def generate_geometry_and_stress_profiles(
     Dict[str, np.ndarray]
         Dictionary containing stress profiles and fracture parameters
     """
+    # Convert float inputs to integers for numpy functions
+    bsdt = int(bsdt)
+    asdt = int(asdt)
+    
     # Define time steps
     base_for_geometry = np.linspace(1, l_scale_base, bsdt)
     base_for_snn_increase_before_shutin = np.linspace(0.1, 10, bsdt)
