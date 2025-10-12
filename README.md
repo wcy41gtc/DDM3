@@ -190,7 +190,7 @@ If you use DDM3D in your research, please cite:
   title={DDM3D: 3D Displacement Discontinuity Method for DAS Simulation with Dynamic Interpolation},
   author={DDM3D Contributors},
   year={2024},
-  version={0.2.0},
+  version={0.1.0},
   url={https://github.com/wcy41gtc/DDM3},
   license={MIT}
 }
