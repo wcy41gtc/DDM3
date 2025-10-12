@@ -33,10 +33,10 @@ def main():
     # Example 2: Custom parameters
     print("\n2. Generating custom evolution profile...")
     profiles_custom = generate_geometry_and_stress_profiles(
-        bsdt=40,           # 40 time steps before shut-in
-        asdt=20,           # 20 time steps after shut-in
-        l_scale=25,        # Larger length scale
-        h_scale=12,        # Larger height scale
+        bsdt=40.0,         # 40 time steps before shut-in
+        asdt=20.0,         # 20 time steps after shut-in
+        l_scale=25.0,      # Larger length scale
+        h_scale=12.0,      # Larger height scale
         nn_scale=1.0e6,    # Higher normal stress scale
         ss_scale=1.2e6     # Higher shear stress scale
     )
@@ -51,13 +51,13 @@ def main():
     # Generate different scenarios
     scenarios = {
         "Conservative": generate_geometry_and_stress_profiles(
-            l_scale=15, h_scale=8, nn_scale=0.6e6, ss_scale=0.8e6
+            l_scale=15.0, h_scale=8.0, nn_scale=0.6e6, ss_scale=0.8e6
         ),
         "Moderate": generate_geometry_and_stress_profiles(
-            l_scale=20, h_scale=10, nn_scale=0.8e6, ss_scale=1.0e6
+            l_scale=20.0, h_scale=10.0, nn_scale=0.8e6, ss_scale=1.0e6
         ),
         "Aggressive": generate_geometry_and_stress_profiles(
-            l_scale=30, h_scale=15, nn_scale=1.2e6, ss_scale=1.5e6
+            l_scale=30.0, h_scale=15.0, nn_scale=1.2e6, ss_scale=1.5e6
         )
     }
     
@@ -72,9 +72,9 @@ def main():
     
     # Test different time scales
     time_scenarios = {
-        "Slow Evolution": generate_geometry_and_stress_profiles(bsdt=80, asdt=40),
-        "Default": generate_geometry_and_stress_profiles(bsdt=60, asdt=30),
-        "Fast Evolution": generate_geometry_and_stress_profiles(bsdt=40, asdt=20)
+        "Slow Evolution": generate_geometry_and_stress_profiles(bsdt=80.0, asdt=40.0),
+        "Default": generate_geometry_and_stress_profiles(bsdt=60.0, asdt=30.0),
+        "Fast Evolution": generate_geometry_and_stress_profiles(bsdt=40.0, asdt=20.0)
     }
     
     # Create time comparison plot

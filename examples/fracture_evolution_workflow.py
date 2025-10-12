@@ -25,11 +25,11 @@ from ddm3d import (
 
 
 def generate_geometry_and_stress_profiles(
-    bsdt=60,
-    asdt=30,
-    l_scale_base=60,
-    l_scale=20,
-    h_scale=10,
+    bsdt=60.0,
+    asdt=30.0,
+    l_scale_base=60.0,
+    l_scale=20.0,
+    h_scale=10.0,
     nl=10,
     nh=10,
     nn_scale=0.8e6,
@@ -42,16 +42,16 @@ def generate_geometry_and_stress_profiles(
     ----------
     bsdt : float, optional
         Before shut in dt, number of time steps before shut in (no real pressure,
-        just assumed fracture opening and growth and stress profile) (unitless), by default 60
+        just assumed fracture opening and growth and stress profile) (unitless), by default 60.0
     asdt : float, optional
         After shut in dt, number of time steps after shut in (no real pressure,
-        just assumed fracture closing and stress profile) (unitless), by default 30
+        just assumed fracture closing and stress profile) (unitless), by default 30.0
     l_scale_base : float, optional
-        Base length scale (m), by default 60
+        Base length scale (m), by default 60.0
     l_scale : float, optional
-        Length scale (m), by default 20
+        Length scale (m), by default 20.0
     h_scale : float, optional
-        Height scale (m), by default 10
+        Height scale (m), by default 10.0
     nl : int, optional
         Number of elements along l, by default 10
     nh : int, optional

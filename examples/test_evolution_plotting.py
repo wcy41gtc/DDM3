@@ -40,15 +40,15 @@ def test_evolution_plotting():
     
     # Generate different profiles with different parameters
     profiles_small = generate_geometry_and_stress_profiles(
-        l_scale=10, h_scale=5, nn_scale=0.4e6, ss_scale=0.5e6
+        l_scale=10.0, h_scale=5.0, nn_scale=0.4e6, ss_scale=0.5e6
     )
     
     profiles_large = generate_geometry_and_stress_profiles(
-        l_scale=30, h_scale=15, nn_scale=1.2e6, ss_scale=1.5e6
+        l_scale=30.0, h_scale=15.0, nn_scale=1.2e6, ss_scale=1.5e6
     )
     
     profiles_fast = generate_geometry_and_stress_profiles(
-        bsdt=30, asdt=15  # Faster evolution
+        bsdt=30.0, asdt=15.0  # Faster evolution
     )
     
     # Create comparison plot
