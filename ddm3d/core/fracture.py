@@ -48,7 +48,7 @@ class Fracture:
         length: float,
         height: float,
         element_size: Tuple[float, float],
-        orientation: Tuple[float, float, float] = (0.0, 90.0, 0.0),
+        orientation: Tuple[float, float, float] = (0.0, 0.0, 0.0),
         material: Optional[Material] = None,
         initial_stress: Optional[Tuple[float, float, float]] = None,
     ) -> "Fracture":
@@ -68,7 +68,7 @@ class Fracture:
         element_size : Tuple[float, float]
             Element size (length, height) in meters
         orientation : Tuple[float, float, float], optional
-            Fracture orientation (o1, o2, o3) in degrees, by default (0, 90, 0)
+            Fracture orientation (o1, o2, o3) in degrees, by default (0, 0, 0)
         material : Material, optional
             Material properties, by default None (creates default material)
         initial_stress : Tuple[float, float, float], optional
@@ -85,69 +85,64 @@ class Fracture:
         if initial_stress is None:
             initial_stress = (0.0, 0.0, 0.0)
 
-        # Calculate number of elements
-        n_elements_length = max(1, int(np.ceil(length / element_size[0])))
-        n_elements_height = max(1, int(np.ceil(height / element_size[1])))
-
-        # Adjust element size to fit exactly
-        actual_element_length = length / n_elements_length
-        actual_element_height = height / n_elements_height
-
         # Create rotation matrix
-        strike_rad = np.deg2rad(orientation[0])
-        dip_rad = np.deg2rad(orientation[1])
-        yaw_rad = np.deg2rad(orientation[2])
+        o1_rad = np.deg2rad(orientation[0])
+        o2_rad = np.deg2rad(orientation[1])
+        o3_rad = np.deg2rad(orientation[2])
 
-        cos_strike = np.cos(strike_rad)
-        sin_strike = np.sin(strike_rad)
-        cos_dip = np.cos(dip_rad)
-        sin_dip = np.sin(dip_rad)
-        cos_yaw = np.cos(yaw_rad)
-        sin_yaw = np.sin(yaw_rad)
+        cos_o1 = np.cos(o1_rad)
+        sin_o1 = np.sin(o1_rad)
+        cos_o2 = np.cos(o2_rad)
+        sin_o2 = np.sin(o2_rad)
+        cos_o3 = np.cos(o3_rad)
+        sin_o3 = np.sin(o3_rad)
+
+        dl = element_size[0]
+        dh = element_size[1]
+
+        c_x = center[0]
+        c_y = center[1]
+        c_z = center[2]
 
         # Rotation matrices
-        strike_matrix = np.array(
+        o1_matrix = np.array(
             [
-                [cos_strike, sin_strike, 0.0],
-                [-sin_strike, cos_strike, 0.0],
+                [cos_o1, sin_o1, 0.0],
+                [-sin_o1, cos_o1, 0.0],
                 [0.0, 0.0, 1.0],
             ]
         )
 
-        dip_matrix = np.array(
-            [[1.0, 0.0, 0.0], [0.0, cos_dip, sin_dip], [0.0, -sin_dip, cos_dip]]
+        o2_matrix = np.array(
+            [[1.0, 0.0, 0.0], [0.0, cos_o2, sin_o2], [0.0, -sin_o2, cos_o2]]
         )
 
-        yaw_matrix = np.array(
-            [[cos_yaw, sin_yaw, 0.0], [-sin_yaw, cos_yaw, 0.0], [0.0, 0.0, 1.0]]
+        o3_matrix = np.array(
+            [[cos_o3, sin_o3, 0.0], [-sin_o3, cos_o3, 0.0], [0.0, 0.0, 1.0]]
         )
 
-        rotation_matrix = np.matmul(np.matmul(strike_matrix, dip_matrix), yaw_matrix)
+        rotation_matrix = np.matmul(np.matmul(o1_matrix, o2_matrix), o3_matrix)
 
         # Create elements
         elements = []
         element_id = 1
 
-        for i in range(n_elements_length):
-            for j in range(n_elements_height):
+        for i in range(1, round(length/dl)):
+            for j in range(1, round(height/dh)):
                 # Local coordinates (before rotation)
-                local_x = (
-                    -length / 2 + actual_element_length / 2 + i * actual_element_length
-                )
-                local_y = 0.0
-                local_z = (
-                    -height / 2 + actual_element_height / 2 + j * actual_element_height
-                )
+                local_x = c_x-length/2+dl/2*(2*i-1)
+                local_y = c_y
+                local_z = c_z-height/2+dh/2*(2*j-1)
 
-                local_coords = np.array([local_x, local_y, local_z])
+                local_coords = np.array([local_x - c_x, local_y - c_y, local_z - c_z])
 
                 # Transform to global coordinates
-                global_coords = rotation_matrix @ local_coords + np.array(center)
+                global_coords = np.matmul(rotation_matrix, local_coords)
 
                 element = DisplacementDiscontinuityElement(
                     element_id=element_id,
-                    center=tuple(global_coords),
-                    dimensions=(actual_element_length, actual_element_height),
+                    center=tuple([global_coords[0]+c_x, global_coords[1]+c_y, global_coords[2]+c_z]),
+                    dimensions=(dl, dh),
                     orientation=orientation,
                     displacement=(0.0, 0.0, 0.0),
                     stress=initial_stress,
@@ -166,7 +161,7 @@ class Fracture:
         length: float,
         height: float,
         element_size: Tuple[float, float],
-        orientation: Tuple[float, float, float] = (0.0, 90.0, 0.0),
+        orientation: Tuple[float, float, float] = (0.0, 0.0, 0.0),
         material: Optional[Material] = None,
         initial_stress: Optional[Tuple[float, float, float]] = None,
     ) -> "Fracture":
@@ -186,7 +181,7 @@ class Fracture:
         element_size : Tuple[float, float]
             Element size (length, height) in meters
         orientation : Tuple[float, float, float], optional
-            Fracture orientation (o1, o2, o3) in degrees, by default (0, 90, 0)
+            Fracture orientation (o1, o2, o3) in degrees, by default (0, 0, 0)
         material : Material, optional
             Material properties, by default None (creates default material)
         initial_stress : Tuple[float, float, float], optional
@@ -203,75 +198,68 @@ class Fracture:
         if initial_stress is None:
             initial_stress = (0.0, 0.0, 0.0)
 
-        # Calculate number of elements
-        n_elements_length = max(1, int(np.ceil(length / element_size[0])))
-        n_elements_height = max(1, int(np.ceil(height / element_size[1])))
+        dl = element_size[0]
+        dh = element_size[1]
 
-        # Adjust element size to fit exactly
-        actual_element_length = length / n_elements_length
-        actual_element_height = height / n_elements_height
+        c_x = center[0]
+        c_y = center[1]
+        c_z = center[2]
 
         # Create rotation matrix
-        strike_rad = np.deg2rad(orientation[0])
-        dip_rad = np.deg2rad(orientation[1])
-        yaw_rad = np.deg2rad(orientation[2])
+        o1_rad = np.deg2rad(orientation[0])
+        o2_rad = np.deg2rad(orientation[1])
+        o3_rad = np.deg2rad(orientation[2])
 
-        cos_strike = np.cos(strike_rad)
-        sin_strike = np.sin(strike_rad)
-        cos_dip = np.cos(dip_rad)
-        sin_dip = np.sin(dip_rad)
-        cos_yaw = np.cos(yaw_rad)
-        sin_yaw = np.sin(yaw_rad)
+        cos_o1 = np.cos(o1_rad)
+        sin_o1 = np.sin(o1_rad)
+        cos_o2 = np.cos(o2_rad)
+        sin_o2 = np.sin(o2_rad)
+        cos_o3 = np.cos(o3_rad)
+        sin_o3 = np.sin(o3_rad)
 
         # Rotation matrices
-        strike_matrix = np.array(
+        o1_matrix = np.array(
             [
-                [cos_strike, sin_strike, 0.0],
-                [-sin_strike, cos_strike, 0.0],
+                [cos_o1, sin_o1, 0.0],
+                [-sin_o1, cos_o1, 0.0],
                 [0.0, 0.0, 1.0],
             ]
         )
 
-        dip_matrix = np.array(
-            [[1.0, 0.0, 0.0], [0.0, cos_dip, sin_dip], [0.0, -sin_dip, cos_dip]]
+        o2_matrix = np.array(
+            [[1.0, 0.0, 0.0], [0.0, cos_o2, sin_o2], [0.0, -sin_o2, cos_o2]]
         )
 
-        yaw_matrix = np.array(
-            [[cos_yaw, sin_yaw, 0.0], [-sin_yaw, cos_yaw, 0.0], [0.0, 0.0, 1.0]]
+        o3_matrix = np.array(
+            [[cos_o3, sin_o3, 0.0], [-sin_o3, cos_o3, 0.0], [0.0, 0.0, 1.0]]
         )
 
-        rotation_matrix = np.matmul(np.matmul(strike_matrix, dip_matrix), yaw_matrix)
+        rotation_matrix = np.matmul(np.matmul(o1_matrix, o2_matrix), o3_matrix)
 
         # Create elements
         elements = []
         element_id = 1
 
-        for i in range(n_elements_length):
-            for j in range(n_elements_height):
+        for i in range(1, round(length/dl)):
+            for j in range(1, round(height/dh)):
                 # Local coordinates (before rotation)
-                local_x = (
-                    -length / 2 + actual_element_length / 2 + i * actual_element_length
-                )
-                local_y = 0.0
-                local_z = (
-                    -height / 2 + actual_element_height / 2 + j * actual_element_height
-                )
+                local_x = c_x-length/2+dl/2*(2*i-1)
+                local_y = c_y
+                local_z = c_z-height/2+dh/2*(2*j-1)
 
                 # Check if point is inside ellipse
-                ellipse_test = (local_x / (length / 2)) ** 2 + (
-                    local_z / (height / 2)
-                ) ** 2
+                ellipse_test = (local_x-c_x)**2/(length/2)**2+(local_z-c_z)**2/(height/2)**2
 
                 if ellipse_test <= 1.0:
-                    local_coords = np.array([local_x, local_y, local_z])
+                    local_coords = np.array([local_x - c_x, local_y - c_y, local_z - c_z])
 
                     # Transform to global coordinates
-                    global_coords = rotation_matrix @ local_coords + np.array(center)
+                    global_coords = np.matmul(rotation_matrix, local_coords)
 
                     element = DisplacementDiscontinuityElement(
                         element_id=element_id,
-                        center=tuple(global_coords),
-                        dimensions=(actual_element_length, actual_element_height),
+                        center=tuple([global_coords[0]+c_x, global_coords[1]+c_y, global_coords[2]+c_z]),
+                        dimensions=(dl, dh),
                         orientation=orientation,
                         displacement=(0.0, 0.0, 0.0),
                         stress=initial_stress,
