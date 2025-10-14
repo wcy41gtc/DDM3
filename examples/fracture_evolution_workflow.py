@@ -79,8 +79,8 @@ def generate_geometry_and_stress_profiles(
     # Series of total length and total height for each time step
     _l = l_scale * np.sqrt(base_for_geometry)
     _h = h_scale * np.sqrt(base_for_geometry)
-    _dl = l_scale / nl * np.sqrt(base_for_geometry)
-    _dh = h_scale / nh * np.sqrt(base_for_geometry)
+    _dl = l_scale / float(nl) * np.sqrt(base_for_geometry)
+    _dh = h_scale / float(nh) * np.sqrt(base_for_geometry)
 
     # Stitch two parts together - first part fracture is growing,
     # second part fracture stopped growing
@@ -697,7 +697,7 @@ def create_fracture_series(
         o2 = 0.0
         o3 = 0.0
 
-        for i in range(30):
+        for i in range(90):
             fracture = make_fracture(
                 profiles["l"][i],
                 profiles["h"][i],
@@ -821,7 +821,7 @@ def calculate_fracture_evolution(
     print(f"Completed {mode} calculations")
 
 
-def save_results(fibers: List[Fiber], mode: str, output_dir: str = "results") -> None:
+def save_results(fibers: List[Fiber], mode: str, output_dir: str = "results", gauge_length: float = 10.0) -> None:
     """
     Save results as plots and HDF5 files.
 
@@ -918,7 +918,7 @@ def save_results(fibers: List[Fiber], mode: str, output_dir: str = "results") ->
     print(f"Saved {mode} results to {output_dir}/")
 
 
-def run_opening_mode_base(recalculate: bool = False):
+def run_opening_mode_base(recalculate: bool = False, gauge_length: float = 10.0):
     """Run opening mode base case (0 degrees o1)."""
     print("=" * 60)
     print("RUNNING OPENING MODE BASE CASE")
@@ -930,7 +930,7 @@ def run_opening_mode_base(recalculate: bool = False):
     if not recalculate and check_h5_files_exist(mode):
         print(f"HDF5 files found for {mode}. Loading and plotting from saved data...")
         try:
-            plot_from_h5_files(mode)
+            plot_from_h5_files(mode, gauge_length=gauge_length)
             print("Opening mode base case completed using saved data!")
             return
         except Exception as e:
@@ -953,12 +953,12 @@ def run_opening_mode_base(recalculate: bool = False):
     calculate_fracture_evolution(fractures_series, fibers, mode)
 
     # Save results
-    save_results(fibers, mode)
+    save_results(fibers, mode, gauge_length=gauge_length)
 
     print("Opening mode base case completed!")
 
 
-def run_opening_mode(recalculate: bool = False):
+def run_opening_mode(recalculate: bool = False, gauge_length: float = 10.0):
     """Run opening mode (-30 degrees o1)."""
     print("=" * 60)
     print("RUNNING OPENING MODE")
@@ -970,7 +970,7 @@ def run_opening_mode(recalculate: bool = False):
     if not recalculate and check_h5_files_exist(mode):
         print(f"HDF5 files found for {mode}. Loading and plotting from saved data...")
         try:
-            plot_from_h5_files(mode)
+            plot_from_h5_files(mode, gauge_length=gauge_length)
             print("Opening mode completed using saved data!")
             return
         except Exception as e:
@@ -993,12 +993,12 @@ def run_opening_mode(recalculate: bool = False):
     calculate_fracture_evolution(fractures_series, fibers, mode)
 
     # Save results
-    save_results(fibers, mode)
+    save_results(fibers, mode, gauge_length=gauge_length)
 
     print("Opening mode completed!")
 
 
-def run_shear_mode(recalculate: bool = False):
+def run_shear_mode(recalculate: bool = False, gauge_length: float = 10.0):
     """Run shear mode."""
     print("=" * 60)
     print("RUNNING SHEAR MODE")
@@ -1010,7 +1010,7 @@ def run_shear_mode(recalculate: bool = False):
     if not recalculate and check_h5_files_exist(mode):
         print(f"HDF5 files found for {mode}. Loading and plotting from saved data...")
         try:
-            plot_from_h5_files(mode)
+            plot_from_h5_files(mode, gauge_length=gauge_length)
             print("Shear mode completed using saved data!")
             return
         except Exception as e:
@@ -1033,12 +1033,12 @@ def run_shear_mode(recalculate: bool = False):
     calculate_fracture_evolution(fractures_series, fibers, mode)
 
     # Save results
-    save_results(fibers, mode)
+    save_results(fibers, mode, gauge_length=gauge_length)
 
     print("Shear mode completed!")
 
 
-def run_mixed_mode(recalculate: bool = False):
+def run_mixed_mode(recalculate: bool = False, gauge_length: float = 10.0):
     """Run mixed mode (shear + normal stress)."""
     print("=" * 60)
     print("RUNNING MIXED MODE")
@@ -1050,7 +1050,7 @@ def run_mixed_mode(recalculate: bool = False):
     if not recalculate and check_h5_files_exist(mode):
         print(f"HDF5 files found for {mode}. Loading and plotting from saved data...")
         try:
-            plot_from_h5_files(mode)
+            plot_from_h5_files(mode, gauge_length=gauge_length)
             print("Mixed mode completed using saved data!")
             return
         except Exception as e:
@@ -1073,7 +1073,7 @@ def run_mixed_mode(recalculate: bool = False):
     calculate_fracture_evolution(fractures_series, fibers, mode)
 
     # Save results
-    save_results(fibers, mode)
+    save_results(fibers, mode, gauge_length=gauge_length)
 
     print("Mixed mode completed!")
 
@@ -1087,13 +1087,13 @@ def main():
         help="Force recalculation even if HDF5 files exist"
     )
     parser.add_argument(
-        "--mode", 
+        "-m", "--mode", 
         choices=["opening_mode_base", "opening_mode", "shear_mode", "mixed_mode", "all"],
         default="all",
         help="Run specific mode or all modes (default: all)"
     )
     parser.add_argument(
-        "--gauge-length", 
+        "-gl", "--gauge-length", 
         type=float, 
         default=10.0,
         help="Gauge length for plotting (default: 10.0)"
@@ -1110,18 +1110,18 @@ def main():
 
     if args.mode == "all":
         # Run all modes
-        run_opening_mode_base(args.recalculate)
-        run_opening_mode(args.recalculate)
-        run_shear_mode(args.recalculate)
-        run_mixed_mode(args.recalculate)
+        run_opening_mode_base(args.recalculate, args.gauge_length)
+        run_opening_mode(args.recalculate, args.gauge_length)
+        run_shear_mode(args.recalculate, args.gauge_length)
+        run_mixed_mode(args.recalculate, args.gauge_length)
     elif args.mode == "opening_mode_base":
-        run_opening_mode_base(args.recalculate)
+        run_opening_mode_base(args.recalculate, args.gauge_length)
     elif args.mode == "opening_mode":
-        run_opening_mode(args.recalculate)
+        run_opening_mode(args.recalculate, args.gauge_length)
     elif args.mode == "shear_mode":
-        run_shear_mode(args.recalculate)
+        run_shear_mode(args.recalculate, args.gauge_length)
     elif args.mode == "mixed_mode":
-        run_mixed_mode(args.recalculate)
+        run_mixed_mode(args.recalculate, args.gauge_length)
 
     print("=" * 60)
     print("ALL MODES COMPLETED!")

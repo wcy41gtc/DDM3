@@ -118,7 +118,7 @@ class Fracture:
         )
 
         o3_matrix = np.array(
-            [[cos_o3, sin_o3, 0.0], [-sin_o3, cos_o3, 0.0], [0.0, 0.0, 1.0]]
+            [[cos_o3, 0.0, sin_o3], [0.0, 1.0, 0.0], [-sin_o3, 0.0, cos_o3]]
         )
 
         rotation_matrix = np.matmul(np.matmul(o1_matrix, o2_matrix), o3_matrix)
@@ -231,7 +231,7 @@ class Fracture:
         )
 
         o3_matrix = np.array(
-            [[cos_o3, sin_o3, 0.0], [-sin_o3, cos_o3, 0.0], [0.0, 0.0, 1.0]]
+            [[cos_o3, 0.0, sin_o3], [0.0, 1.0, 0.0], [-sin_o3, 0.0, cos_o3]]
         )
 
         rotation_matrix = np.matmul(np.matmul(o1_matrix, o2_matrix), o3_matrix)

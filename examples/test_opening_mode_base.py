@@ -56,7 +56,7 @@ def test_opening_mode_base(recalculate: bool = False, gauge_length: float = 10.0
     calculate_fracture_evolution(fractures_series, fibers, mode)
 
     # Save results
-    save_results(fibers, mode)
+    save_results(fibers, mode, gauge_length=gauge_length)
 
     print("Opening mode base case test completed!")
     print(f"Results saved in 'results/' directory")
