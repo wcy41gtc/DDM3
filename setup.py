@@ -16,7 +16,7 @@ def read_requirements():
 
 setup(
     name="ddm3d",
-    version="0.1.0",
+    version="0.2.0",
     author="DDM3D Contributors",
     author_email="your.email@example.com",
     description="3D Displacement Discontinuity Method for DAS Simulation with Dynamic Interpolation",

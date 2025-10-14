@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ddm3d"
-version = "0.1.0"
+version = "0.2.0"
 description = "3D Displacement Discontinuity Method for DAS Simulation with Dynamic Interpolation"
 readme = "README.md"
 license = {text = "MIT"}

@@ -183,18 +183,43 @@ pytest --cov=ddm3d
 
 ## Citation
 
+The code is a derivitive work from the following dissertation:
+```bibtex
+@phdthesis{wu2014numerical,
+  title={Numerical modeling of complex hydraulic fracture development in unconventional reservoirs},
+  author={Wu, Kan},
+  year={2014}
+}
+```
+
 If you use DDM3D in your research, please cite:
 
 ```bibtex
-@software{ddm3d2024,
+@software{ddm3d2025,
   title={DDM3D: 3D Displacement Discontinuity Method for DAS Simulation with Dynamic Interpolation},
   author={DDM3D Contributors},
-  year={2024},
-  version={0.1.0},
+  year={2025},
+  version={0.2.0},
   url={https://github.com/wcy41gtc/DDM3},
   license={MIT}
 }
 ```
+
+Please also consider citing this study where the original code was developed:
+
+```bibtex
+@article{wang2023numerical,
+  title={Numerical modeling of low-frequency distributed acoustic sensing signals for mixed-mode reactivation},
+  author={Wang, Chaoyi and Eaton, David W and Ma, Yuanyuan},
+  journal={Geophysics},
+  volume={88},
+  number={6},
+  pages={WC25--WC36},
+  year={2023},
+  publisher={Society of Exploration Geophysicists}
+}
+```
+
 
 ## License
 
