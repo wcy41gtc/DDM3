@@ -6,19 +6,28 @@ for testing purposes.
 """
 
 import argparse
-from examples.fracture_evolution_workflow import (
+import sys
+import os
+
+# Add parent directory to path to import utils
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from utils import (
     generate_geometry_and_stress_profiles,
     create_fracture_series,
     create_fiber_network,
     calculate_fracture_evolution,
+    save_fibers_to_h5,
+    plot_fiber_component,
     save_results,
     check_h5_files_exist,
-    plot_from_h5_files,
+    plot_from_h5_file,
+    plot_from_h5_files_legacy,
 )
 from ddm3d import Material
 
 
-def test_opening_mode_base(recalculate: bool = False, gauge_length: float = 10.0):
+def test_opening_mode_base(recalculate: bool = False, gauge_length: float = 10.0, scale: float = 20.0):
     """Test opening mode base case with reduced time steps."""
     print("=" * 60)
     print("TESTING OPENING MODE BASE CASE")
@@ -30,7 +39,8 @@ def test_opening_mode_base(recalculate: bool = False, gauge_length: float = 10.0
     if not recalculate and check_h5_files_exist(mode):
         print(f"HDF5 files found for {mode}. Loading and plotting from saved data...")
         try:
-            plot_from_h5_files(mode, gauge_length=gauge_length)
+            plot_from_h5_files_legacy(mode, gauge_length=gauge_length, component="EYY_U", scale=scale, fiber_id=1)
+            plot_from_h5_files_legacy(mode, gauge_length=gauge_length, component="EYY_U_Rate", scale=scale, fiber_id=1)
             print("Opening mode base case test completed using saved data!")
             return
         except Exception as e:
@@ -56,7 +66,27 @@ def test_opening_mode_base(recalculate: bool = False, gauge_length: float = 10.0
     calculate_fracture_evolution(fractures_series, fibers, mode)
 
     # Save results
-    save_results(fibers, mode, gauge_length=gauge_length)
+    save_fibers_to_h5(fibers, mode)
+    
+    # Create plots for fiber 1 (across fracture)
+    results_dir = f"results/{mode}"
+    os.makedirs(results_dir, exist_ok=True)
+    
+    fiber1 = fibers[0]  # Fiber 1 (across fracture)
+    plot_fiber_component(
+        fiber1, 
+        component="EYY_U", 
+        gauge_length=gauge_length,
+        scale=scale,
+        save_path=f"{results_dir}/{mode}_fiber_1_EYY_U.png"
+    )
+    plot_fiber_component(
+        fiber1, 
+        component="EYY_U_Rate", 
+        gauge_length=gauge_length,
+        scale=scale,
+        save_path=f"{results_dir}/{mode}_fiber_1_EYY_U_Rate.png"
+    )
 
     print("Opening mode base case test completed!")
     print(f"Results saved in 'results/' directory")
@@ -76,14 +106,21 @@ def main():
         default=10.0,
         help="Gauge length for plotting (default: 10.0)"
     )
+    parser.add_argument(
+        "-s", "--scale", 
+        type=float, 
+        default=20.0, 
+        help="Scale factor for the data for plotting, by default 1.0"
+    )
     
     args = parser.parse_args()
     
     print(f"Recalculate: {args.recalculate}")
     print(f"Gauge length: {args.gauge_length}")
+    print(f"Scale: {args.scale}")
     print("=" * 60)
     
-    test_opening_mode_base(args.recalculate, args.gauge_length)
+    test_opening_mode_base(args.recalculate, args.gauge_length, args.scale)
 
 
 if __name__ == "__main__":

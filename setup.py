@@ -16,10 +16,10 @@ def read_requirements():
 
 setup(
     name="ddm3d",
-    version="0.2.0",
+    version="0.3.0",
     author="DDM3D Contributors",
     author_email="your.email@example.com",
-    description="3D Displacement Discontinuity Method for DAS Simulation with Dynamic Interpolation",
+    description="3D Displacement Discontinuity Method for DAS Simulation with Comprehensive Examples and Dynamic Interpolation",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/wcy41gtc/DDM3",
@@ -38,6 +38,7 @@ setup(
         "Topic :: Scientific/Engineering :: Physics",
         "Topic :: Scientific/Engineering :: Geology",
         "Topic :: Scientific/Engineering :: Visualization",
+        "Topic :: Scientific/Engineering :: Information Analysis",
     ],
     python_requires=">=3.8",
     install_requires=[

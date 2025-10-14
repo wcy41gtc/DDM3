@@ -11,11 +11,14 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from examples.fracture_evolution_workflow import (
-    plot_from_h5_files,
+from .utils import (
+    plot_from_h5_file,
+    plot_from_h5_files_legacy,
     check_h5_files_exist,
     plot_geometry_and_stress_evolution,
-    generate_geometry_and_stress_profiles
+    generate_geometry_and_stress_profiles,
+    save_fibers_to_h5,
+    plot_fiber_component
 )
 
 
@@ -75,11 +78,12 @@ def main():
     
     try:
         # Plot from HDF5 files
-        plot_from_h5_files(
+        plot_from_h5_files_legacy(
             mode=args.mode,
             output_dir=args.output_dir,
             gauge_length=args.gauge_length,
-            figsize=tuple(args.figsize)
+            figsize=tuple(args.figsize),
+            fiber_id=1
         )
         
         # Optionally plot evolution profiles

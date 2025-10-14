@@ -12,6 +12,7 @@ This example shows how to:
 import numpy as np
 import matplotlib.pyplot as plt
 from ddm3d import Material, Fracture, Fiber, DDMCalculator
+from .utils import plot_fracture_aperture, plot_fiber_response
 
 
 def main():
@@ -76,65 +77,7 @@ def main():
     print("\nExample completed successfully!")
 
 
-def plot_fracture_aperture(fracture):
-    """Plot fracture aperture (normal displacement)."""
-    # Get element centers and displacements
-    centers = fracture.get_element_centers()
-    displacements = [element.dnn for element in fracture.elements]
-
-    # Create scatter plot
-    fig, ax = plt.subplots(figsize=(10, 6))
-    scatter = ax.scatter(
-        [c[0] for c in centers],
-        [c[2] for c in centers],
-        c=displacements,
-        cmap="viridis",
-        s=50,
-    )
-
-    ax.set_xlabel("X (m)")
-    ax.set_ylabel("Z (m)")
-    ax.set_title("Fracture Aperture (Normal Displacement)")
-    ax.set_aspect("equal")
-
-    # Add colorbar
-    cbar = plt.colorbar(scatter, ax=ax)
-    cbar.set_label("Displacement (m)")
-
-    plt.tight_layout()
-    plt.show()
-
-
-def plot_fiber_response(fiber):
-    """Plot fiber strain response."""
-    # Get channel positions and strain data
-    positions = fiber.get_channel_positions()
-    strain_data = []
-
-    for channel in fiber.channels:
-        strain_data.append(channel.get_strain_data("EXX")[-1])
-
-    # Create plot
-    fig, ax = plt.subplots(figsize=(12, 6))
-
-    # Calculate distance along fiber
-    distances = [0]
-    for i in range(1, len(positions)):
-        dist = np.sqrt(
-            (positions[i][0] - positions[i - 1][0]) ** 2
-            + (positions[i][1] - positions[i - 1][1]) ** 2
-            + (positions[i][2] - positions[i - 1][2]) ** 2
-        )
-        distances.append(distances[-1] + dist)
-
-    ax.plot(distances, np.array(strain_data) * 1e6, "b-", linewidth=2)
-    ax.set_xlabel("Distance along fiber (m)")
-    ax.set_ylabel("Strain (μϵ)")
-    ax.set_title("DAS Fiber Strain Response")
-    ax.grid(True, alpha=0.3)
-
-    plt.tight_layout()
-    plt.show()
+# Plotting functions are now imported from utils.py
 
 
 if __name__ == "__main__":

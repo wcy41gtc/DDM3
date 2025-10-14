@@ -7,7 +7,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from examples.fracture_evolution_workflow import (
+from .utils import (
     generate_geometry_and_stress_profiles,
     plot_geometry_and_stress_evolution,
     plot_evolution_comparison

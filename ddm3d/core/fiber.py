@@ -2,6 +2,8 @@
 
 from typing import List, Tuple, Optional, Dict, Any
 import numpy as np
+import h5py
+import os
 
 
 class Channel:
@@ -475,6 +477,82 @@ class Fiber:
             # This method can be used to track time steps if needed
             # For now, it's a placeholder for future time series functionality
             pass
+
+    def save_to_h5(self, filename: str) -> None:
+        """
+        Save fiber data to HDF5 file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the HDF5 file
+        """
+        # Create directory if it doesn't exist
+        dirname = os.path.dirname(filename)
+        if dirname:  # Only create directory if there is one
+            os.makedirs(dirname, exist_ok=True)
+        
+        with h5py.File(filename, 'w') as f:
+            # Save fiber metadata
+            f.attrs['fiber_id'] = self._fiber_id
+            f.attrs['n_channels'] = self.n_channels
+            
+            # Save channel positions
+            positions = np.array(self.get_channel_positions())
+            f.create_dataset('positions', data=positions)
+            
+            # Save time series data for each channel
+            for i, channel in enumerate(self._channels):
+                if channel.stress_data:
+                    stress_data = np.array(channel.stress_data)
+                    f.create_dataset(f'channel_{i}_stress', data=stress_data)
+                
+                if channel.strain_data:
+                    strain_data = np.array(channel.strain_data)
+                    f.create_dataset(f'channel_{i}_strain', data=strain_data)
+                
+                if channel.displacement_data:
+                    disp_data = np.array(channel.displacement_data)
+                    f.create_dataset(f'channel_{i}_displacement', data=disp_data)
+
+    def load_from_h5(self, filename: str) -> None:
+        """
+        Load fiber data from HDF5 file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the HDF5 file
+        """
+        if not os.path.exists(filename):
+            raise FileNotFoundError(f"HDF5 file not found: {filename}")
+        
+        with h5py.File(filename, 'r') as f:
+            # Load channel positions
+            positions = f['positions'][:]
+            
+            # Clear existing data
+            self.clear_all_data()
+            
+            # Load time series data for each channel
+            for i, channel in enumerate(self._channels):
+                # Load stress data
+                if f'channel_{i}_stress' in f:
+                    stress_data = f[f'channel_{i}_stress'][:]
+                    for time_step_data in stress_data:
+                        channel.add_stress_data(*time_step_data)
+                
+                # Load strain data
+                if f'channel_{i}_strain' in f:
+                    strain_data = f[f'channel_{i}_strain'][:]
+                    for time_step_data in strain_data:
+                        channel.add_strain_data(*time_step_data)
+                
+                # Load displacement data
+                if f'channel_{i}_displacement' in f:
+                    disp_data = f[f'channel_{i}_displacement'][:]
+                    for time_step_data in disp_data:
+                        channel.add_displacement_data(*time_step_data)
 
     def __repr__(self) -> str:
         return f"Fiber(id={self._fiber_id}, n_channels={self.n_channels})"

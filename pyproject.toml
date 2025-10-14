@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ddm3d"
-version = "0.2.0"
-description = "3D Displacement Discontinuity Method for DAS Simulation with Dynamic Interpolation"
+version = "0.3.0"
+description = "3D Displacement Discontinuity Method for DAS Simulation with Comprehensive Examples and Dynamic Interpolation"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -22,7 +22,10 @@ keywords = [
     "displacement discontinuity method",
     "DDM",
     "seismic",
-    "geophysics"
+    "geophysics",
+    "fracture evolution",
+    "time-series analysis",
+    "3D visualization"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -38,6 +41,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
     "Topic :: Scientific/Engineering :: Geology",
     "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 requires-python = ">=3.8"
 dependencies = [

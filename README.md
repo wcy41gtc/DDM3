@@ -15,9 +15,10 @@ DDM3D is a modern, object-oriented Python library for simulating Distributed Aco
 - **Advanced Visualization**: Comprehensive plotting tools including time-space contour plots
 - **Fracture Evolution Workflow**: Complete time-series simulation with multiple stress modes
 - **Professional Plotting**: Time-space contour plots matching original DDM3D format
-- **High Performance**: Optimized numerical calculations using NumPy (no scipy dependency)
+- **Comprehensive Examples**: Four complete example modes with detailed documentation and 3D visualizations
+- **Command-line Interface**: Flexible parameter control for all examples
+- **HDF5 Data Storage**: Efficient time-series data storage and retrieval
 - **Extensible**: Easy to add new fracture geometries and calculation methods
-- **Memory Efficient**: Proper matplotlib memory management for large simulations
 
 ## Installation
 
@@ -95,38 +96,75 @@ FiberPlotter.plot_fiber_contour(fiber, component='SXX', gauge_length=5.0, save_p
 
 ## Documentation
 
-Documentation is available in the README.md file and through the comprehensive docstrings in the code.
+### Main Documentation
+- **Project Overview**: This README.md file provides comprehensive project information
+- **API Reference**: Detailed docstrings throughout the codebase
+- **Examples Guide**: Complete examples in the `examples/` directory with individual README files
+
+### Examples Documentation
+Each example directory contains detailed documentation:
+- **3D Configuration Diagrams**: Visual fracture and fiber layouts
+- **Evolution Plots**: Fracture geometry and stress evolution over time
+- **Command-line Options**: Complete parameter reference
+- **Expected Results**: Detailed output descriptions
+- **Physical Interpretation**: Real-world applications and use cases
+
+### Coordinate System
+The package uses a custom coordinate system (o1, o2, o3) to avoid confusion with geological strike-dip-rake conventions. See the [Examples README](examples/README.md) for detailed orientation definitions.
 
 ## Examples
 
-Check out the `examples/` directory for comprehensive usage examples:
+The `examples/` directory contains comprehensive, ready-to-run examples demonstrating different fracture modes and their DAS responses. Each example includes complete Python scripts, detailed documentation, and command-line interfaces.
 
-- `basic_example.py` - Simple fracture modeling and DAS response calculation
-- `fracture_evolution_workflow.py` - Complete fracture evolution simulation with multiple stress modes
-- `test_opening_mode_base.py` - Test script for individual fracture evolution modes
+### Quick Start with Examples
+
+```bash
+# Navigate to any example directory
+cd examples/opening_mode_base
+
+# Run the simulation
+python run_opening_mode_base.py
+
+# With custom parameters
+python run_opening_mode_base.py --recalculate --gauge_length 5.0 --scale 20.0
+```
+
+### Available Examples
+
+1. **[Opening Mode Base](examples/opening_mode_base/)** - Vertical fracture with pure opening (0°, 0°, 0°)
+2. **[Opening Mode Incline](examples/opening_mode_incline/)** - Inclined fracture with pure opening (-30°, 0°, 0°)
+3. **[Shear Mode Incline](examples/shear_mode_incline/)** - Inclined fracture with pure shear slip (-30°, 0°, 0°)
+4. **[Mixed Mode Incline](examples/mixed_mode_incline/)** - Inclined fracture with combined opening and shear (-30°, 0°, 0°)
+
+### Example Features
+
+Each example includes:
+- **Complete Python Script** (`run_*.py`) - Ready to run simulation
+- **Detailed README.md** - Comprehensive documentation with 3D configuration diagrams
+- **Command-line Interface** - Flexible parameter control with `--recalculate` and `--gauge_length` options
+- **Evolution Plots** - Fracture geometry and stress evolution visualizations
+- **HDF5 Output** - Time-series data storage for efficient analysis
 
 ### Fracture Evolution Workflow
 
-The package includes a complete workflow for simulating fracture evolution over time with different stress modes:
+The examples demonstrate a complete workflow for simulating fracture evolution over time with different stress modes:
 
 ```python
-from examples.fracture_evolution_workflow import main
+from examples.utils import run_mode_simulation
 
-# Run all four fracture evolution modes
-main()
+# Run individual modes
+run_mode_simulation('opening_mode_base')
+run_mode_simulation('opening_mode_incline')
+run_mode_simulation('shear_mode_incline')
+run_mode_simulation('mixed_mode_incline')
 ```
-
-Available modes:
-- **opening_mode_base**: Fracture with 0° o1 angle
-- **opening_mode**: Fracture with -30° o1 angle  
-- **shear_mode**: Fracture with shear stress loading
-- **mixed_mode**: Fracture with combined shear and normal stress loading
 
 The workflow generates:
 - Time-series HDF5 data files for each fiber
 - Time-space contour plots with dynamic interpolation
 - Strain and strain rate plots (EYY_U, EZZ_U, EYY_U_Rate, EZZ_U_Rate)
 - Complete fracture evolution analysis with 4 different stress modes
+- 3D configuration diagrams showing fracture and fiber layouts
 
 ### Dynamic Interpolation
 
@@ -149,9 +187,18 @@ FiberPlotter.plot_fiber_contour(fiber, component='EYY_U', gauge_length=20.0)    
 
 This enables both high-resolution analysis and overview visualization without recalculating DDM results.
 
+### Synthetic vs. Physics-Based Data
+
+The examples use synthetic geometry evolution and stress profiles derived from mathematical approximations that mimic real-world cases. The code is designed to be flexible and users are encouraged to use physics-based fracture geometry and stress evolution data when available. The synthetic approach provides:
+
+- **Educational Value**: Clear understanding of DDM principles and DAS responses
+- **Reproducible Results**: Consistent baseline for comparison and validation
+- **Flexible Framework**: Easy integration of real-world data and physics-based models
+- **Research Foundation**: Solid base for developing more complex, physics-based simulations
+
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+Contributions are welcome! Please see the [Contributing Guide](CONTRIBUTING.md) for details.
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -180,10 +227,13 @@ pytest --cov=ddm3d
 - **Comprehensive Testing**: Full workflow testing with multiple fracture modes
 - **Type Hints**: Complete type annotations for better IDE support
 - **Documentation**: Extensive docstrings and examples
+- **Example Framework**: Complete example system with utilities and common functions
+- **3D Visualization**: Configuration diagrams for all fracture and fiber setups
+- **Evolution Analysis**: Time-series fracture geometry and stress evolution plots
 
 ## Citation
 
-The code is a derivitive work from the following dissertation:
+The code is inspired by the the following dissertation:
 ```bibtex
 @phdthesis{wu2014numerical,
   title={Numerical modeling of complex hydraulic fracture development in unconventional reservoirs},
@@ -196,10 +246,10 @@ If you use DDM3D in your research, please cite:
 
 ```bibtex
 @software{ddm3d2025,
-  title={DDM3D: 3D Displacement Discontinuity Method for DAS Simulation with Dynamic Interpolation},
+  title={DDM3D: 3D Displacement Discontinuity Method for DAS Simulation with Comprehensive Examples and Dynamic Interpolation},
   author={DDM3D Contributors},
   year={2025},
-  version={0.2.0},
+  version={0.3.0},
   url={https://github.com/wcy41gtc/DDM3},
   license={MIT}
 }
