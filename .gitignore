@@ -157,3 +157,6 @@ results/
 output/
 temp/
 *.tmp
+
+# Backup and original code
+backup/
