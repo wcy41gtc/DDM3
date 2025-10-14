@@ -280,3 +280,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Based on the original DDM3D implementation
 - Built with NumPy and Matplotlib
 - Inspired by the geomechanics and DAS communities
+- Special thanks for original support from Dr. David Eaton and University of Calgary for developing the original version of this code.
